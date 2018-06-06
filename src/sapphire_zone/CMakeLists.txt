@@ -22,8 +22,8 @@ target_link_libraries( sapphire_zone
                          boost )
 
 if (UNIX)
-  target_link_libraries( sapphire_zone pthread )
-  target_link_libraries( sapphire_zone dl )
+#  target_link_libraries( sapphire_zone pthread )
+#  target_link_libraries( sapphire_zone dl )
 endif()
 
 target_include_directories( sapphire_zone

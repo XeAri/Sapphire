@@ -19,7 +19,6 @@ services:
 before_build:
   - set PATH="C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin";%PATH%
   - cd c:\projects\sapphire
-  - git submodule update --init
   - mkdir build
   - cd build
   - cmake .. -G "Visual Studio 14 2015" 
