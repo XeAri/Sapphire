@@ -12,13 +12,21 @@ file(GLOB SERVER_SOURCE_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         *.c*
         )
 
-add_executable( sapphire_zone ${SERVER_PUBLIC_INCLUDE_FILES} ${SERVER_SOURCE_FILES} )
+add_executable( sapphire_zone
+                ${SERVER_PUBLIC_INCLUDE_FILES}
+                ${SERVER_SOURCE_FILES} )
 
-target_link_libraries( sapphire_zone common )
+target_link_libraries( sapphire_zone
+                       PUBLIC
+                         common
+                         boost )
 
 if (UNIX)
   target_link_libraries( sapphire_zone pthread )
   target_link_libraries( sapphire_zone dl )
 endif()
 
-target_include_directories( sapphire_zone PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" )
+target_include_directories( sapphire_zone
+                            PUBLIC
+                              "${CMAKE_CURRENT_SOURCE_DIR}"
+                              "${Boost_INCLUDE_DIR}" )

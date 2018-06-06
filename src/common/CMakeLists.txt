@@ -76,13 +76,13 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib )
 
 add_library( common ${UTILS_PUBLIC_INCLUDE_FILES} ${UTILS_SOURCE_FILES} )
 
-target_link_libraries( common PUBLIC xivdat  )
-target_link_libraries( common PUBLIC mysqlConnector )
+target_link_libraries( common
+                       PUBLIC
+                         xivdat
+                         mysqlConnector
+                         boost )
 
 target_include_directories( common PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/"
                                           "${MYSQLCONNECTOR_ROOT}/src/MysqlConnector/src/"
                                           "${XIVDAT_ROOT}/src/XivDat/src/"
                                           "${Boost_INCLUDE_DIR}" )
-
-target_include_directories( common PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/libraries/external/")
-
