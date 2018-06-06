@@ -27,7 +27,8 @@ ExternalProject_Add( mysqlConnector_external
         BINARY_DIR ${MYSQLCONNECTOR_ROOT}/src/MysqlConnector
         SOURCE_DIR ${MYSQLCONNECTOR_ROOT}/src/MysqlConnector
         INSTALL_DIR ${MYSQLCONNECTOR_ROOT}/bin
-        BUILD_COMMAND ${BUILD_EXEC} )
+        #BUILD_COMMAND ${BUILD_EXEC} )
+        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config DEBUG )
 
 message( ${MYSQLCONNECTOR_ROOT}/src/MysqlConnector/src/ )
 
@@ -50,7 +51,8 @@ ExternalProject_Add( xivdat_external
         BINARY_DIR ${XIVDAT_ROOT}/src/XivDat
         SOURCE_DIR ${XIVDAT_ROOT}/src/XivDat
         INSTALL_DIR ${XIVDAT_ROOT}/bin
-        BUILD_COMMAND ${BUILD_EXEC} )
+        #BUILD_COMMAND ${BUILD_EXEC} )
+        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config DEBUG )
 
 add_library( xivdat STATIC IMPORTED )
 set_target_properties( xivdat PROPERTIES IMPORTED_LOCATION
