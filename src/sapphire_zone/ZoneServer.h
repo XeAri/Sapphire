@@ -7,40 +7,55 @@
 #include <mutex>
 #include <map>
 
+#include "Forwards.h"
+
 namespace Core {
 
-  class ZoneServer
-  {
-  public:
-    ZoneServer( const std::string& configPath );
-    ~ZoneServer();
+   class ZoneServer
+   {
+   public:
+      ZoneServer( const std::string& configPath );
+      ~ZoneServer();
 
-    void run( int32_t argc, char* argv[] );
+      void run( int32_t argc, char* argv[] );
 
-    bool loadSettings( int32_t argc, char* argv[] );
+      bool createSession( uint32_t sessionId );
+      void removeSession( uint32_t sessionId );
+      void removeSession( std::string playerName );
 
-    void mainLoop();
+      bool loadSettings( int32_t argc, char* argv[] );
 
-    bool isRunning() const;
+      SessionPtr getSession( uint32_t id );
+      SessionPtr getSession( std::string playerName );
 
-    void printBanner() const;
+      size_t getSessionCount() const;
 
-  private:
+      void mainLoop();
 
-    uint16_t m_port;
-    std::string m_ip;
-    int64_t m_lastDBPingTime;
+      bool isRunning() const;
 
-    bool m_bRunning;
+      void printBanner() const;
 
-    std::string m_configPath;
+   private:
 
-    std::map< uint32_t, uint32_t > m_zones;
+      uint16_t m_port;
+      std::string m_ip;
+      int64_t m_lastDBPingTime;
 
-  };
+      bool m_bRunning;
+
+      std::string m_configPath;
+
+      std::mutex m_sessionMutex;
+
+      std::map< uint32_t, SessionPtr > m_sessionMapById;
+      std::map< std::string, SessionPtr > m_sessionMapByName;
+
+      std::map< uint32_t, uint32_t > m_zones;
+
+   };
 
 }
 
 #endif
-
 

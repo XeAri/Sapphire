@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _LOCKED_QUEUE_H
+#define _LOCKED_QUEUE_H
+
 #include <memory>
 #include <thread>
 #include <mutex>
@@ -7,7 +9,7 @@
 
 namespace Core {
 
-   template<class T>
+   template< class T >
    class LockedQueue
    {
    public:
@@ -122,3 +124,4 @@ namespace Core {
    }
 
 }
+#endif

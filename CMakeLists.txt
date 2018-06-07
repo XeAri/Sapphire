@@ -38,10 +38,14 @@ git_describe( VERSION --all --dirty=-d )
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/src/common/Version.cpp.in"
                 "${CMAKE_CURRENT_SOURCE_DIR}/src/common/Version.cpp" @ONLY )
 
+find_package( MySQL )
+
 ##########################################################################
 #add_subdirectory( "src/libraries/sapphire/datReader" )
 #add_subdirectory( "src/libraries/sapphire/mysqlConnector" )
 add_subdirectory( dep/boost )
+add_subdirectory( dep/mysql )
+add_subdirectory( dep/zlib )
 add_subdirectory( "src/common" )
 add_subdirectory( "src/sapphire_zone" )
 

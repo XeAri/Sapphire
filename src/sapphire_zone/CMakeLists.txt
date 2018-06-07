@@ -4,13 +4,37 @@ cmake_policy(SET CMP0014 OLD)
 
 project( sapphire_zone )
 
-file(GLOB SERVER_PUBLIC_INCLUDE_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+file( GLOB SERVER_PUBLIC_INCLUDE_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         /*.h
-        )
+        Actor/*.h
+        Action/*.h
+        DebugCommand/*.h
+        Event/*.h
+        Inventory/*.h
+        Linkshell/*.h
+        Math/*.h
+        Network/*.h
+        Network/Handlers/*.h
+        Network/PacketWrappers/*.h
+        Script/*.h
+        StatusEffect/*.h
+        Zone/*.h )
 
-file(GLOB SERVER_SOURCE_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+file( GLOB SERVER_SOURCE_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         *.c*
-        )
+        Actor/*.c*
+        Action/*.c*
+        DebugCommand/*.c*
+        Event/*.c*
+        Inventory/*.c*
+        Linkshell/*.c*
+        Math/*.c*
+        Network/*.c*
+        Network/Handlers/*.c*
+        Network/PacketWrappers/*.c*
+        Script/*.c*
+        StatusEffect/*.c*
+        Zone/*.c* )
 
 add_executable( sapphire_zone
                 ${SERVER_PUBLIC_INCLUDE_FILES}
@@ -19,7 +43,9 @@ add_executable( sapphire_zone
 target_link_libraries( sapphire_zone
                        PUBLIC
                          common
-                         boost )
+                         boost
+                         mysql
+                         zlib )
 
 target_include_directories( sapphire_zone
                             PUBLIC

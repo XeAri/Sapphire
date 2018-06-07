@@ -5,10 +5,8 @@
 #include <unordered_map>
 #include <type_traits>
 
-namespace Core
-{
-namespace Util
-{
+namespace Core {
+namespace Util {
    template< typename T, typename ActorIdType = uint32_t >
    class SpawnIndexAllocator
    {
