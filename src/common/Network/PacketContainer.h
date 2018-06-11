@@ -6,6 +6,7 @@
 #include "Common.h"
 #include "CommonNetwork.h"
 #include "GamePacket.h"
+#include "GamePacketNew.h"
 
 namespace Core {
 namespace Network {
@@ -19,11 +20,11 @@ public:
    PacketContainer();
    ~PacketContainer();
 
-   void addPacket( GamePacket pEntry );
+   void addPacket( FFXIVPacketBase entry );
 
    FFXIVARR_PACKET_HEADER m_ipcHdr;
 
-   std::vector< GamePacket > m_entryList;
+   std::vector< FFXIVPacketBase > m_entryList;
 
    std::string toString();
 

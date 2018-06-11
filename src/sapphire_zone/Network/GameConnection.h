@@ -64,7 +64,7 @@ public:
 
    void OnError( const boost::system::error_code & error ) override;
 
-   void handlePackets( const Packets::FFXIVARR_PACKET_HEADER& ipcHeader,
+   void handlePackets( const Packets::FFXIVARR_PACKET_HEADER& packetHeader,
                        const std::vector< Packets::FFXIVARR_PACKET_RAW >& packetData );
 
    void queueInPacket( Packets::GamePacketPtr inPacket );

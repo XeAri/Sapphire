@@ -12,6 +12,9 @@
 
 #include <Exd/ExdDataGenerated.h>
 #include <Network/PacketContainer.h>
+#include <Network/GamePacketNew.h>
+#include <Network/PacketDef/Ipcs.h>
+#include <Network/PacketDef/Zone/ServerZoneDef.h>
 #include <Database/DbLoader.h>
 #include <Database/CharaDbConnection.h>
 #include <Database/DbWorkerPool.h>
@@ -212,12 +215,26 @@ void Core::ZoneServer::printBanner() const
    pLog->info( "===========================================================" );
 }
 
+using namespace Core::Common;
+using namespace Core::Network::Packets;
+using namespace Core::Network::Packets::Server;
+
 void Core::ZoneServer::mainLoop()
 {
    auto pLog = g_fw.get< Logger >();
    auto pTeriMgr = g_fw.get< TerritoryMgr >();
    auto pScriptMgr = g_fw.get< Scripting::ScriptMgr >();
    auto pDb = g_fw.get< Db::DbWorkerPool< Db::CharaDbConnection > >();
+
+   std::vector< FFXIVPacketBase > packetList;
+
+   FFXIVIpcPacket< FFXIVIpcHateList, ServerZoneIpcType > hateListPacket( 123456, 123456 );
+   hateListPacket.data().padding = 1234;
+
+   FFXIVRawPacket rawPacket( 9/*segmentType*/, 256/*size*/, 123456, 123456 );
+
+   packetList.push_back( hateListPacket );
+   packetList.push_back( rawPacket );
 
    while( isRunning() )
    {

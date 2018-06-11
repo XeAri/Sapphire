@@ -46,6 +46,8 @@ find_package( MySQL )
 add_subdirectory( dep/boost )
 add_subdirectory( dep/mysql )
 add_subdirectory( dep/zlib )
+add_subdirectory( dep/mysqlConnector )
+add_subdirectory( dep/XivDat )
 add_subdirectory( "src/common" )
 add_subdirectory( "src/sapphire_zone" )
 

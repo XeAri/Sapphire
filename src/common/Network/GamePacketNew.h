@@ -20,6 +20,9 @@ template < typename T, typename T1 >
 class GamePacketNew;
 
 template < typename T, typename T1 >
+class FFXIVIpcPacket;
+
+template < typename T, typename T1 >
 std::ostream& operator << ( std::ostream& os, const GamePacketNew< T, T1 >& packet );
 
 template< class T >
@@ -27,6 +30,12 @@ using ZoneChannelPacket = GamePacketNew< T, ServerZoneIpcType >;
 
 template< class T >
 using ChatChannelPacket = GamePacketNew< T, ServerChatIpcType >;
+
+template< class T >
+using ZoneChannelPacketNew = FFXIVIpcPacket< T, ServerZoneIpcType >;
+
+template< class T >
+using ChatChannelPacketNew = FFXIVIpcPacket< T, ServerChatIpcType >;
 
 /**
 * The base implementation of a game packet. Needed for parsing packets.
@@ -233,6 +242,180 @@ std::ostream& operator<<( std::ostream& os, const GamePacketNew<T, T1>& packet )
    return packet.serialize( os );
 #endif
 }
+
+
+////////////////////////////////////////////////7
+
+class FFXIVPacketBase
+{
+public:
+   FFXIVPacketBase( uint16_t segmentType, uint32_t sourceActorId, uint32_t targetActorId ) :
+      m_segmentType( segmentType )
+   {
+      initializeSegmentHeader();
+      setSourceActor( sourceActorId );
+      setTargetActor( targetActorId );
+   }
+
+   std::size_t getSize() const
+   {
+      return m_segHdr.size;
+   }
+
+protected:
+   /** The segment header */
+   FFXIVARR_PACKET_SEGMENT_HEADER m_segHdr;
+   uint16_t m_segmentType;
+
+protected:
+   virtual uint32_t getContentSize() { return 0; };
+   virtual std::vector< uint8_t > getContent() { return{}; };
+
+   /**
+   * @brief Gets the segment type of this packet.
+   */
+   uint16_t getSegmentType() const
+   {
+      return m_segmentType;
+   }
+
+   /**
+   * @brief Sets the source actor id for this packet.
+   * @param actorId The source actor id.
+   */
+   void setSourceActor( uint32_t actorId )
+   {
+      m_segHdr.source_actor = actorId;
+   };
+
+   /**
+   * @brief Gets the source actor id for this packet.
+   * @return The source actor id.
+   */
+   uint32_t getSourceActor() const
+   {
+      return m_segHdr.source_actor;
+   };
+
+   /**
+   * @brief Sets the target actor id for this packet.
+   * @param actorId The target actor id.
+   */
+   void setTargetActor( uint32_t actorId )
+   {
+      m_segHdr.target_actor = actorId;
+   };
+
+   /**
+   * @brief Gets the target actor id for this packet.
+   */
+   uint32_t getTargetActor( void ) const
+   {
+      return m_segHdr.target_actor;
+   };
+
+   /** Initializes the fields of the segment header structure */
+   virtual void initializeSegmentHeader( void )
+   {
+      // Zero out the structure.
+      memset( &m_segHdr, 0, sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) );
+
+      // Set the values of static fields.
+      // The size must be the sum of the segment header and the content
+      m_segHdr.size = sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) + getContentSize();
+      m_segHdr.type = getSegmentType();
+   }
+
+};
+
+template < typename T, typename T1 >
+class FFXIVIpcPacket : public FFXIVIpcPacketBase< T1 >, public FFXIVPacketBase
+{
+public:
+   FFXIVIpcPacket< T, T1 >( uint32_t sourceActorId, uint32_t targetActorId ) :
+      FFXIVPacketBase( 3, sourceActorId, targetActorId )
+   {
+      initialize();
+   };
+
+   uint32_t getContentSize() override
+   {
+      return sizeof( FFXIVARR_IPC_HEADER ) + sizeof( T );
+   }
+
+   std::vector< uint8_t > getContent() override
+   {
+      std::vector< uint8_t > content( getContentSize() );
+      memcpy( content.data(), &m_ipcHdr, sizeof( FFXIVARR_IPC_HEADER ) );
+      memcpy( content.data() + sizeof( FFXIVARR_IPC_HEADER ), &m_data, sizeof( T ) );
+      return content;
+   }
+
+   virtual T1 ipcType()
+   {
+      return static_cast< T1 >( m_data._ServerIpcType );
+   };
+
+   /** Gets a reference to the underlying IPC data structure. */
+   T& data() { return m_data; };
+
+protected:
+   /** Initializes the fields of the header structures */
+   virtual void initialize()
+   {
+      // Zero out the structures.
+      memset( &m_ipcHdr, 0, sizeof( FFXIVARR_IPC_HEADER ) );
+      memset( &m_data, 0, sizeof( T ) );
+
+      // The IPC type itself.
+      m_ipcHdr.type = static_cast< ServerZoneIpcType >( m_data._ServerIpcType );
+   };
+
+protected:
+   /** The IPC packet header */
+   FFXIVARR_IPC_HEADER m_ipcHdr;
+   /** The underlying data portion of the packet as a structure */
+   T m_data;
+};
+
+
+class FFXIVRawPacket : public FFXIVPacketBase
+{
+public:
+   FFXIVRawPacket( uint16_t type, uint32_t size, uint32_t sourceActorId, uint32_t targetActorId ) :
+      FFXIVPacketBase( type, sourceActorId, targetActorId )
+   {
+      m_data.resize( size - sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) );
+      initialize();
+      m_segHdr.size = size;
+   };
+
+   uint32_t getContentSize() override
+   {
+      return m_data.size();
+   }
+
+   std::vector< uint8_t > getContent() override
+   {
+      return m_data;
+   }
+
+   /** Gets a reference to the underlying IPC data structure. */
+   std::vector< uint8_t >& data() { return m_data; };
+
+protected:
+   /** Initializes the fields of the header structures */
+   virtual void initialize()
+   {
+      // Zero out the structures.
+      memset( &m_data[0], 0, m_data.size() - sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) );
+   };
+
+protected:
+   /** The underlying data portion of the packet as a structure */
+   std::vector< uint8_t > m_data;
+};
+
 
 } /* Packets */
 } /* Network */

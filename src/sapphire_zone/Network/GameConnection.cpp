@@ -364,7 +364,7 @@ void Core::Network::GameConnection::injectPacket( const std::string& packetpath,
    }
 }
 
-void Core::Network::GameConnection::handlePackets( const Core::Network::Packets::FFXIVARR_PACKET_HEADER& ipcHeader,
+void Core::Network::GameConnection::handlePackets( const Core::Network::Packets::FFXIVARR_PACKET_HEADER& packetHeader,
                                                    const std::vector< Core::Network::Packets::FFXIVARR_PACKET_RAW >& packetData )
 {
    auto pLog = g_fw.get< Logger >();
@@ -416,7 +416,7 @@ void Core::Network::GameConnection::handlePackets( const Core::Network::Packets:
          sendSinglePacket( &pPe );
 
          // main connection, assinging it to the session
-         if( ipcHeader.connectionType == ConnectionType::Zone )
+         if( packetHeader.connectionType == ConnectionType::Zone )
          {
             pPe = GamePacket( 0x00, 0x38, 0, 0, 0x02 );
             pPe.setValAt< uint32_t >( 0x10, playerId );
@@ -425,7 +425,7 @@ void Core::Network::GameConnection::handlePackets( const Core::Network::Packets:
             session->setZoneConnection( pCon );
          }
          // chat connection, assinging it to the session
-         else if( ipcHeader.connectionType == ConnectionType::Chat )
+         else if( packetHeader.connectionType == ConnectionType::Chat )
          {
             pPe = GamePacket( 0x00, 0x38, 0, 0, 0x02 );
             pPe.setValAt< uint32_t >( 0x10, playerId );

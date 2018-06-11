@@ -5,53 +5,7 @@ include( ExternalProject )
 
 #############################################################################
 
-set( MYSQLCONNECTOR_ROOT ${CMAKE_BINARY_DIR}/external/MysqlConnector )
-set( MYSQLCONNECTOR_LIB_DIR ${MYSQLCONNECTOR_ROOT}/bin/lib )
-set( MYSQLCONNECTOR_INCLUDE_DIR ${MYSQLCONNECTOR_ROOT}/bin/include )
 
-if( UNIX )
-  set( MYSQLCONNECTOR_LIB_NAME libmysqlConnector.a )
-  set( XIVDAT_LIB_NAME libxivdat.a )
-else()
-  set( MYSQLCONNECTOR_LIB_NAME mysqlConnector.lib )
-  set( XIVDAT_LIB_NAME xivdat.lib )
-endif()
-
-ExternalProject_Add( mysqlConnector_external
-        PREFIX ${MYSQLCONNECTOR_ROOT}
-        GIT_REPOSITORY "https://github.com/SapphireMordred/MysqlConnector.git"
-        UPDATE_COMMAND ${GIT_EXECUTABLE} pull
-        PATCH_COMMAND ""
-        BINARY_DIR ${MYSQLCONNECTOR_ROOT}/src/MysqlConnector
-        SOURCE_DIR ${MYSQLCONNECTOR_ROOT}/src/MysqlConnector
-        INSTALL_DIR ${MYSQLCONNECTOR_ROOT}/bin
-        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config DEBUG )
-
-add_library( mysqlConnector STATIC IMPORTED )
-set_target_properties( mysqlConnector PROPERTIES IMPORTED_LOCATION
-                       ${MYSQLCONNECTOR_ROOT}/src/MysqlConnector/src/${MYSQLCONNECTOR_LIB_NAME} )
-add_dependencies( mysqlConnector mysqlConnector_external )
-
-#############################################################################
-
-set( XIVDAT_ROOT ${CMAKE_BINARY_DIR}/external/XivDat )
-set( XIVDAT_LIB_DIR ${XIVDAT_ROOT}/bin/lib )
-set( XIVDAT_INCLUDE_DIR ${XIVDAT_ROOT}/bin/include )
-
-ExternalProject_Add( xivdat_external
-        PREFIX ${XIVDAT_ROOT}
-        GIT_REPOSITORY "https://github.com/SapphireMordred/XivDat.git"
-        UPDATE_COMMAND ${GIT_EXECUTABLE} pull
-        PATCH_COMMAND ""
-        BINARY_DIR ${XIVDAT_ROOT}/src/XivDat
-        SOURCE_DIR ${XIVDAT_ROOT}/src/XivDat
-        INSTALL_DIR ${XIVDAT_ROOT}/bin
-        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config DEBUG )
-
-add_library( xivdat STATIC IMPORTED )
-set_target_properties( xivdat PROPERTIES IMPORTED_LOCATION
-                       ${XIVDAT_ROOT}/src/XivDat/src/${XIVDAT_LIB_NAME} )
-add_dependencies( xivdat xivdat_external )
 
 #############################################################################
 
