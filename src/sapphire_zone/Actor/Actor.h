@@ -8,6 +8,7 @@
 #include <set>
 #include <map>
 #include <queue>
+#include <Network/GamePacketNew.h>
 
 namespace Core {
 namespace Entity {
@@ -98,7 +99,7 @@ namespace Entity {
 
       ActorPtr getClosestActor();
 
-      void sendToInRangeSet( Network::Packets::GamePacketPtr pPacket, bool bToSelf = false );
+      void sendToInRangeSet( Network::Packets::FFXIVPacketBase pPacket, bool bToSelf = false );
 
       // add an actor to in range set
       void addInRangeActor( ActorPtr pActor );

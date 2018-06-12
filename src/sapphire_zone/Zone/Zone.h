@@ -9,6 +9,8 @@
 
 #include "Forwards.h"
 
+#include <Network/GamePacketNew.h>
+
 #include <set>
 #include <map>
 #include <boost/enable_shared_from_this.hpp>
@@ -97,7 +99,7 @@ public:
 
    void updateInRangeSet( Entity::ActorPtr pActor, Cell* pCell );
 
-   void queueOutPacketForRange( Entity::Player& sourcePlayer, uint32_t range, Network::Packets::GamePacketPtr pPacketEntry );
+   void queueOutPacketForRange( Entity::Player& sourcePlayer, uint32_t range, Network::Packets::FFXIVPacketBase packetEntry );
 
    uint32_t getGuId() const;
 

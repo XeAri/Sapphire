@@ -376,8 +376,8 @@ void Core::DebugCommandHandler::add( char * data, Entity::Player& player, boost:
       // temporary research packet
       int32_t opcode;
       sscanf( params.c_str(), "%x", &opcode );
-      auto pPe = Network::Packets::make_GamePacket( opcode, 0x30, player.getId(), player.getId() );
-      player.queuePacket( pPe );
+      //auto pPe = Network::Packets::make_GamePacket( opcode, 0x30, player.getId(), player.getId() );
+      //player.queuePacket( pPe );
    }
    else if( subCommand == "actrl" )
    {

@@ -265,7 +265,7 @@ void Core::Zone::removeActor( Entity::ActorPtr pActor )
 
 }
 
-void Core::Zone::queueOutPacketForRange( Entity::Player& sourcePlayer, uint32_t range, GamePacketPtr pPacketEntry )
+void Core::Zone::queueOutPacketForRange( Entity::Player& sourcePlayer, uint32_t range, FFXIVPacketBase packetEntry )
 {
    auto pTeriMgr = g_fw.get< TerritoryMgr >();
    if( pTeriMgr->isPrivateTerritory( getTerritoryId() ) )
@@ -286,9 +286,9 @@ void Core::Zone::queueOutPacketForRange( Entity::Player& sourcePlayer, uint32_t 
       {
 
          auto pSession = pServerZone->getSession( player->getId() );
-         pPacketEntry->setValAt< uint32_t >( 0x08, player->getId() );
+         //pPacketEntry->setValAt< uint32_t >( 0x08, player->getId() );
          if( pSession )
-            pSession->getZoneConnection()->queueOutPacket( pPacketEntry );
+            pSession->getZoneConnection()->queueOutPacket( packetEntry );
       }
    }
 }

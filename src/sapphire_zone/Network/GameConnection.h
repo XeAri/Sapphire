@@ -46,7 +46,7 @@ private:
    SessionPtr m_pSession;
 
    LockedQueue< Packets::GamePacketPtr > m_inQueue;
-   LockedQueue< Packets::GamePacketPtr > m_outQueue;
+   LockedQueue< Packets::FFXIVPacketBase > m_outQueue;
 
 public:
    ConnectionType m_conType;
@@ -68,7 +68,7 @@ public:
                        const std::vector< Packets::FFXIVARR_PACKET_RAW >& packetData );
 
    void queueInPacket( Packets::GamePacketPtr inPacket );
-   void queueOutPacket( Packets::GamePacketPtr outPacket );
+   void queueOutPacket( Packets::FFXIVPacketBase outPacket );
 
    void processInQueue();
    void processOutQueue();
@@ -81,7 +81,7 @@ public:
 
    void sendPackets( Packets::PacketContainer* pPacket );
 
-   void sendSinglePacket( Packets::GamePacket* pPacket );
+   void sendSinglePacket( Packets::FFXIVPacketBase pPacket );
 
    void injectPacket( const std::string& packetpath, Entity::Player& player );
 

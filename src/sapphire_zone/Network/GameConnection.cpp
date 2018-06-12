@@ -179,7 +179,7 @@ void Core::Network::GameConnection::queueInPacket( Core::Network::Packets::GameP
    m_inQueue.push( inPacket );
 }
 
-void Core::Network::GameConnection::queueOutPacket( Core::Network::Packets::GamePacketPtr outPacket )
+void Core::Network::GameConnection::queueOutPacket( Core::Network::Packets::FFXIVPacketBase outPacket )
 {
    m_outQueue.push( outPacket );
 }
@@ -291,16 +291,17 @@ void Core::Network::GameConnection::processOutQueue()
    PacketContainer pRP = PacketContainer();
 
    // get next packet off the queue
-   while( auto pPacket = m_outQueue.pop() )
+   while( m_outQueue.size() )
    {
-      if( pPacket->getSize() == 0 )
+      auto pPacket = m_outQueue.pop();
+      if( pPacket.getSize() == 0 )
       {
          pLog->debug( "end of packet set" );
          break;
       }
 
-      pRP.addPacket( *pPacket );
-      totalSize += pPacket->getSize();
+      pRP.addPacket( pPacket );
+      totalSize += pPacket.getSize();
    }
 
    if( totalSize > 0 )
@@ -308,10 +309,10 @@ void Core::Network::GameConnection::processOutQueue()
 
 }
 
-void Core::Network::GameConnection::sendSinglePacket( Packets::GamePacket* pPacket )
+void Core::Network::GameConnection::sendSinglePacket( Packets::FFXIVPacketBase pPacket )
 {
    PacketContainer pRP = PacketContainer();
-   pRP.addPacket( *pPacket );
+   pRP.addPacket( pPacket );
    sendPackets( &pRP );
 }
 
@@ -359,7 +360,7 @@ void Core::Network::GameConnection::injectPacket( const std::string& packetpath,
       if( pSize == 0 )
          return;
 
-      queueOutPacket( GamePacketPtr( new GamePacket( packet + k, pSize, false ) ) );
+      //queueOutPacket( GamePacketPtr( new GamePacket( packet + k, pSize, false ) ) );
       k += ( pSize );
    }
 }
@@ -409,32 +410,33 @@ void Core::Network::GameConnection::handlePackets( const Core::Network::Packets:
          if( !m_pSession && session )
             m_pSession = session;
 
-         GamePacket pPe( 0x00, 0x18, 0, 0, 0x07 );
-         //pPe.setValAt< uint32_t >( 0x10, 0xE0000005 );
-         pPe.setValAt< uint32_t >( 0x10, 0xE0037603 );
-         pPe.setValAt< uint32_t >( 0x14, static_cast< uint32_t >( time( nullptr ) ) );
-         sendSinglePacket( &pPe );
+         FFXIVRawPacket pe( 0x07, 0x18, 0, 0 );
+         *(unsigned int*)(&pe.data()[0]) = 0xE0037603;
+         *(unsigned int*)(&pe.data()[4]) = static_cast< uint32_t >( time( nullptr ) );
+         sendSinglePacket( pe );
 
          // main connection, assinging it to the session
          if( packetHeader.connectionType == ConnectionType::Zone )
          {
-            pPe = GamePacket( 0x00, 0x38, 0, 0, 0x02 );
-            pPe.setValAt< uint32_t >( 0x10, playerId );
-            sendSinglePacket( &pPe );
+            FFXIVRawPacket pe( 0x02, 0x38, 0, 0 );
+            *(unsigned int*)(&pe.data()[0]) = playerId;
+            sendSinglePacket( pe );
             pLog->info( "[" + std::string( id ) + "] Setting session for zone connection" );
             session->setZoneConnection( pCon );
          }
          // chat connection, assinging it to the session
          else if( packetHeader.connectionType == ConnectionType::Chat )
          {
-            pPe = GamePacket( 0x00, 0x38, 0, 0, 0x02 );
-            pPe.setValAt< uint32_t >( 0x10, playerId );
-            sendSinglePacket( &pPe );
+            FFXIVRawPacket pe( 0x02, 0x38, 0, 0 );
+            *(unsigned int*)(&pe.data()[0]) = playerId;
+            sendSinglePacket( pe );
 
             pLog->info( "[" + std::string( id ) + "] Setting session for chat connection" );
             session->setChatConnection( pCon );
-            pPe = GamePacket( 0x02, 0x28, playerId, playerId, 0x03 );
-            sendSinglePacket( &pPe );
+
+            FFXIVRawPacket pe1( 0x03, 0x28, playerId, playerId );
+            *(unsigned int*)(&pe1.data()[8]) = 3;
+            sendSinglePacket( pe1 );
          }
 
          break;
@@ -451,11 +453,10 @@ void Core::Network::GameConnection::handlePackets( const Core::Network::Packets:
          uint32_t id = *( uint32_t* ) &inPacket.data[0];
          uint32_t timeStamp = *( uint32_t* ) &inPacket.data[4];
 
-         GamePacket pPe( 0x00, 0x18, 0, 0, 0x08 );
-         pPe.setValAt< uint32_t >( 0x10, id );
-         pPe.setValAt< uint32_t >( 0x14, timeStamp );
-         sendSinglePacket( &pPe );
-
+         FFXIVRawPacket pe1( 0x08, 0x18, 0, 0 );
+         *(unsigned int*)(&pe1.data()[0]) = id;
+         *(unsigned int*)(&pe1.data()[4]) = timeStamp;
+         sendSinglePacket( pe1 );
          break;
       }
       case 8:

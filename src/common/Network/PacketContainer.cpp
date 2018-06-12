@@ -50,7 +50,8 @@ void Core::Network::Packets::PacketContainer::fillSendBuffer( std::vector< uint8
 
    for( ; it != m_entryList.end(); ++it )
    {
-      memcpy( &tempBuffer[0] + sizeof( FFXIVARR_PACKET_HEADER ) + offset, it->getData(), it->getSize() );
+      auto data = it->getData();
+      memcpy( &tempBuffer[0] + sizeof( FFXIVARR_PACKET_HEADER ) + offset, &data[0], it->getSize() );
       offset += it->getSize();
    }
 

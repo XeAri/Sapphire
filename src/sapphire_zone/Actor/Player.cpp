@@ -1161,7 +1161,7 @@ const uint8_t* Core::Entity::Player::getGcRankArray() const
    return m_gcRank;
 }
 
-void Core::Entity::Player::queuePacket( Network::Packets::GamePacketPtr pPacket )
+void Core::Entity::Player::queuePacket( Network::Packets::FFXIVPacketBase pPacket )
 {
    auto pServerZone = g_fw.get< ZoneServer >();
    auto pSession = pServerZone->getSession( m_id );
@@ -1176,7 +1176,7 @@ void Core::Entity::Player::queuePacket( Network::Packets::GamePacketPtr pPacket 
 
 }
 
-void Core::Entity::Player::queueChatPacket( Network::Packets::GamePacketPtr pPacket )
+void Core::Entity::Player::queueChatPacket( Network::Packets::FFXIVPacketBase pPacket )
 {
    auto pServerZone = g_fw.get< ZoneServer >();
    auto pSession = pServerZone->getSession( m_id );

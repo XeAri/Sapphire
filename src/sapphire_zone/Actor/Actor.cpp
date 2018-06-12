@@ -278,7 +278,7 @@ Send a packet to all players in range, potentially to self if set and is player
 \param GamePacketPtr to send
 \param bool should be send to self?
 */
-void Core::Entity::Actor::sendToInRangeSet( Network::Packets::GamePacketPtr pPacket, bool bToSelf )
+void Core::Entity::Actor::sendToInRangeSet( Network::Packets::FFXIVPacketBase pPacket, bool bToSelf )
 {
    auto pServerZone = g_fw.get< ZoneServer >();
    if( bToSelf && isPlayer() )
@@ -298,8 +298,8 @@ void Core::Entity::Actor::sendToInRangeSet( Network::Packets::GamePacketPtr pPac
    for( const auto &pCurAct : m_inRangePlayers )
    {
       assert( pCurAct );
-      pPacket->setValAt< uint32_t >( 0x04, m_id );
-      pPacket->setValAt< uint32_t >( 0x08, pCurAct->getId() );
+      //pPacket->setValAt< uint32_t >( 0x04, m_id );
+      //pPacket->setValAt< uint32_t >( 0x08, pCurAct->getId() );
       // it might be that the player DC'd in which case the session would be invalid
       pCurAct->queuePacket( pPacket );
    }

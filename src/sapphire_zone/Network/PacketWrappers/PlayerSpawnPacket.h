@@ -19,11 +19,11 @@ namespace Server {
    * @brief The packet sent to spawn a player.
    */
    class PlayerSpawnPacket :
-      public GamePacketNew< FFXIVIpcPlayerSpawn, ServerZoneIpcType >
+      public FFXIVIpcPacket< FFXIVIpcPlayerSpawn, ServerZoneIpcType >
    {
    public:
       PlayerSpawnPacket( Entity::Player& player, Entity::Player& target ) :
-         GamePacketNew< FFXIVIpcPlayerSpawn, ServerZoneIpcType >( player.getId(), target.getId() )
+         FFXIVIpcPacket< FFXIVIpcPlayerSpawn, ServerZoneIpcType >( player.getId(), target.getId() )
       {
          initialize( player, target );
       };

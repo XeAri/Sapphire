@@ -26,10 +26,10 @@ template < typename T, typename T1 >
 std::ostream& operator << ( std::ostream& os, const GamePacketNew< T, T1 >& packet );
 
 template< class T >
-using ZoneChannelPacket = GamePacketNew< T, ServerZoneIpcType >;
+using ZoneChannelPacket = FFXIVIpcPacket< T, ServerZoneIpcType >;
 
 template< class T >
-using ChatChannelPacket = GamePacketNew< T, ServerChatIpcType >;
+using ChatChannelPacket = FFXIVIpcPacket< T, ServerChatIpcType >;
 
 template< class T >
 using ZoneChannelPacketNew = FFXIVIpcPacket< T, ServerZoneIpcType >;
@@ -249,6 +249,12 @@ std::ostream& operator<<( std::ostream& os, const GamePacketNew<T, T1>& packet )
 class FFXIVPacketBase
 {
 public:
+   FFXIVPacketBase() :
+     m_segmentType( 0 )
+   {
+      initializeSegmentHeader();
+   }
+
    FFXIVPacketBase( uint16_t segmentType, uint32_t sourceActorId, uint32_t targetActorId ) :
       m_segmentType( segmentType )
    {
@@ -260,6 +266,11 @@ public:
    std::size_t getSize() const
    {
       return m_segHdr.size;
+   }
+
+   virtual std::vector< uint8_t > getData()
+   {
+      return {};
    }
 
 protected:
@@ -338,6 +349,12 @@ public:
       initialize();
    };
 
+   FFXIVIpcPacket< T, T1 >( uint32_t sourceActorId ) :
+      FFXIVPacketBase( 3, sourceActorId, sourceActorId )
+   {
+      initialize();
+   };
+
    uint32_t getContentSize() override
    {
       return sizeof( FFXIVARR_IPC_HEADER ) + sizeof( T );
@@ -349,6 +366,17 @@ public:
       memcpy( content.data(), &m_ipcHdr, sizeof( FFXIVARR_IPC_HEADER ) );
       memcpy( content.data() + sizeof( FFXIVARR_IPC_HEADER ), &m_data, sizeof( T ) );
       return content;
+   }
+
+   std::vector< uint8_t > getData() override
+   {
+      std::vector< uint8_t > data( sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) + sizeof( FFXIVARR_IPC_HEADER ) + sizeof( m_data ) );
+
+      memcpy( &data[0], &m_segHdr, sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) );
+      memcpy( &data[sizeof( FFXIVARR_PACKET_SEGMENT_HEADER )], &m_ipcHdr, sizeof( FFXIVARR_IPC_HEADER ) );
+      memcpy( &data[sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) + sizeof( FFXIVARR_IPC_HEADER )], &m_data, sizeof( m_data ) );
+
+      return data;
    }
 
    virtual T1 ipcType()
@@ -398,6 +426,16 @@ public:
    std::vector< uint8_t > getContent() override
    {
       return m_data;
+   }
+
+   std::vector< uint8_t > getData() override
+   {
+      std::vector< uint8_t > data( sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) + m_data.size() );
+
+      memcpy( &data[0], &m_segHdr, sizeof( FFXIVARR_PACKET_SEGMENT_HEADER ) );
+      memcpy( &data[sizeof( FFXIVARR_PACKET_SEGMENT_HEADER )], &m_data[0], m_data.size() );
+
+      return data;
    }
 
    /** Gets a reference to the underlying IPC data structure. */
