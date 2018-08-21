@@ -17,9 +17,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 # set(Boost_DEBUG 1)
 
 if( NOT SAPPHIRE_BOOST_VER )
-    set( SAPPHIRE_BOOST_VER 1.55.0 )
+    set( SAPPHIRE_BOOST_VER 1.63.0 )
 endif()
-set( SAPPHIRE_BOOST_FOLDER_NAME boost_1_55_0 )
+set( SAPPHIRE_BOOST_FOLDER_NAME boost_1_63_0 )
 
 ##########################################################################
 # Common and library path
