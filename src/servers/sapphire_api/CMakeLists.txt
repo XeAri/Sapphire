@@ -18,9 +18,6 @@ set_target_properties(sapphire_api PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/"
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/"
 )
-add_executable( sapphire_api
-                ${SERVER_PUBLIC_INCLUDE_FILES}
-                ${SERVER_SOURCE_FILES} )
 
 target_link_libraries( sapphire_api
                        PUBLIC
