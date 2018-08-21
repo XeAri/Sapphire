@@ -4,6 +4,7 @@
 #include <Network/GamePacketNew.h>
 #include <Network/PacketDef/Zone/ServerZoneDef.h>
 #include "Forwards.h"
+#include <string>
 
 namespace Core {
 namespace Network {
@@ -30,7 +31,7 @@ public:
    {
       assert( m_data.header.effectCount <= 8 );
 
-      std::memcpy( &m_data.effects[m_data.header.effectCount++], &effect, sizeof( Server::EffectEntry ) );
+      memcpy( &m_data.effects[m_data.header.effectCount++], &effect, sizeof( Server::EffectEntry ) );
    }
 
    void setAnimationId( uint16_t animationId )

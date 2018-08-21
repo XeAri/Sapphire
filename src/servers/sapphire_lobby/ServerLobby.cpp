@@ -49,7 +49,7 @@ namespace Core {
       return g_restConnector.getSession( sessionId );
    }
 
-   ConfigMgrPtr ServerLobby::getConfig() const
+   boost::shared_ptr< ConfigMgr > ServerLobby::getConfig() const
    {
       return m_pConfig;
    }
