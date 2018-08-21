@@ -18,11 +18,18 @@ set_target_properties(sapphire_api PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/"
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/"
 )
+add_executable( sapphire_api
+                ${SERVER_PUBLIC_INCLUDE_FILES}
+                ${SERVER_SOURCE_FILES} )
 
-if (UNIX)
-  target_link_libraries (sapphire_api common pthread dl z)
-else()
-  target_link_libraries (sapphire_api common zlib1)
-endif()
+target_link_libraries( sapphire_api
+                       PUBLIC
+                         common
+                         boost
+                         mysql
+                         zlib )
 
-target_link_libraries( sapphire_api ${Boost_LIBRARIES} ${Boost_LIBRARIES} )
+target_include_directories( sapphire_api
+                            PUBLIC
+                              "${CMAKE_CURRENT_SOURCE_DIR}"
+                              "${Boost_INCLUDE_DIR}" )
