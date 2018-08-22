@@ -133,7 +133,7 @@ if( UNIX )
         /usr/local/lib
         /usr/local/lib/mysql
         /usr/local/mysql/lib
-        /usr/lib/x86_64-linux-gnu/
+        /usr/lib/x86_64-linux-gnu
       DOC "Specify the location of the mysql library here."
     )
   endforeach(LIB ${MYSQL_ADD_LIBRARY})
