@@ -119,6 +119,8 @@ find_path(MYSQL_INCLUDE_DIR
     "Specify the directory containing mysql.h."
 )
 
+
+message( ${MYSQL_INCLUDE_DIR} )
 if( UNIX )
   foreach(LIB ${MYSQL_ADD_LIBRARIES})
     find_library( MYSQL_LIBRARY
@@ -131,10 +133,12 @@ if( UNIX )
         /usr/local/lib
         /usr/local/lib/mysql
         /usr/local/mysql/lib
+        /usr/lib/x86_64-linux-gnu/
       DOC "Specify the location of the mysql library here."
     )
   endforeach(LIB ${MYSQL_ADD_LIBRARY})
 endif( UNIX )
+
 
 if( WIN32 )
   find_library( MYSQL_LIBRARY
