@@ -2,6 +2,7 @@
 if(UNIX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -pthread")
+  set(GCC_CXX_FLAGS ${GCC_CXX_FLAGS} "-static-libgcc -static-libstdc++ -static")
 else()
   add_definitions(-D_WIN32_WINNT=0x601)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
