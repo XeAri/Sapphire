@@ -41,16 +41,16 @@ check_cxx_source_compiles("
   STD_HAS_WORKING_WREGEX)
 
 if (STD_HAS_WORKING_WREGEX)
-  find_package(Boost 1.55 REQUIRED system filesystem thread program_options iostreams)
+  find_package(Boost 1.55 REQUIRED log log_setup thread date_time filesystem system)
 else()
-  find_package(Boost 1.55 REQUIRED system filesystem thread program_options iostreams regex)
+  find_package(Boost 1.55 REQUIRED log log_setup thread date_time filesystem system regex )
 endif()
 
 # Find if Boost was compiled in C++03 mode because it requires -DBOOST_NO_CXX11_SCOPED_ENUMS
 
 set(CMAKE_REQUIRED_INCLUDES ${Boost_INCLUDE_DIR})
 set(CMAKE_REQUIRED_LIBRARIES ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_IOSTREAMS_LIBRARY})
-set(CMAKE_REQUIRED_FLAGS "-std=c++11")
+set(CMAKE_REQUIRED_FLAGS "-std=c++14")
 check_cxx_source_compiles("
   #include <boost/filesystem/path.hpp>
   #include <boost/filesystem/operations.hpp>
