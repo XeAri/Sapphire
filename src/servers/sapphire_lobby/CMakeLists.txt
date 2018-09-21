@@ -25,5 +25,5 @@ else()
   target_link_libraries(sapphire_lobby common zlib1)
 endif()
 
-target_link_libraries(sapphire_lobby ${Boost_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(sapphire_lobby boost boost_filesystem boost_thread boost_log_setup boost_log boost_system ${Boost_LIBRARIES} ${Boost_LIBRARIES})
 cotire( sapphire_lobby )
