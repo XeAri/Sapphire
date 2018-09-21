@@ -17,6 +17,7 @@ set_target_properties(sapphire_api PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/"
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/"
 )
+target_link_libraries( sapphire_api boost )
 
 if (UNIX)
   target_link_libraries (sapphire_api common pthread dl z)
@@ -24,4 +25,3 @@ else()
   target_link_libraries (sapphire_api common zlib1)
 endif()
 
-target_link_libraries( sapphire_api ${Boost_LIBRARIES} ${Boost_LIBRARIES} )
