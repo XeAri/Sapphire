@@ -2,9 +2,11 @@
 #define SAPPHIRE_HOUSINGMGR_H
 
 #include "Forwards.h"
+#include "BaseManager.h"
 #include "Territory/HousingZone.h"
 #include <set>
 #include <unordered_map>
+#include <array>
 
 namespace Sapphire::Data
 {
@@ -13,7 +15,7 @@ namespace Sapphire::Data
 
 namespace Sapphire::World::Manager
 {
-  class HousingMgr
+  class HousingMgr : public BaseManager
   {
 
   public:
@@ -26,7 +28,7 @@ namespace Sapphire::World::Manager
     {
       // land table
       uint64_t m_landSetId;
-      uint64_t m_landId;
+      uint16_t m_landId;
 
       Common::LandType m_type;
       uint8_t m_size;
@@ -44,8 +46,13 @@ namespace Sapphire::World::Manager
       std::string m_estateComment;
       std::string m_estateName;
 
+      bool m_hasAetheryte;
+
       uint64_t m_buildTime;
       uint64_t m_endorsements;
+
+      uint16_t m_maxPlacedExternalItems;
+      uint16_t m_maxPlacedInternalItems;
     };
 
     /*!
@@ -62,7 +69,7 @@ namespace Sapphire::World::Manager
      */
     using LandIdentToInventoryContainerMap = std::unordered_map< uint64_t, ContainerIdToContainerMap >;
 
-    HousingMgr();
+    HousingMgr( FrameworkPtr pFw );
     virtual ~HousingMgr();
 
     bool init();
@@ -84,7 +91,7 @@ namespace Sapphire::World::Manager
 
     bool relinquishLand( Entity::Player& player, uint8_t plot );
 
-    void buildPresetEstate( Entity::Player& player, uint8_t plotNum, uint32_t presetItem );
+    void buildPresetEstate( Entity::Player& player, uint8_t plotNum, uint32_t presetCatalogId );
 
     void requestEstateRename( Entity::Player& player, const Common::LandIdent ident );
 
@@ -109,6 +116,13 @@ namespace Sapphire::World::Manager
      * This enforces permissions on the inventory too so random players can't request an estates items
      */
     void sendEstateInventory( Entity::Player& player, uint16_t inventoryType, uint8_t plotNum );
+
+    /*!
+     * @brief Sends all the available internal inventories in one go. Used to initially populate the menu.
+     * @param player The player to send the containers to
+     * @param storeroom True if we should send the storeroom, false we send the placed items
+     */
+    void sendInternalEstateInventoryBatch( Entity::Player& player, bool storeroom = false );
 
     /*!
      * @brief Get the land & house data that was cached on world startup.
@@ -142,7 +156,112 @@ namespace Sapphire::World::Manager
      */
     bool initHouseModels( Entity::Player& player, LandPtr land, uint32_t presetCatalogId );
 
+    void reqPlaceHousingItem( Entity::Player& player, uint16_t landId, uint16_t containerId, uint16_t slotId,
+                              Common::FFXIVARR_POSITION3 pos, float rotation );
+
+    void reqPlaceItemInStore( Entity::Player& player, uint16_t landId, uint16_t containerId, uint16_t slotId );
+
+    /*!
+     * @brief Returns the equivalent YardObject for a HousingItem
+     * @param item The item to convert into a YardObject
+     * @return The resultant YardObject
+     */
+    Common::HousingObject getYardObjectForItem( Inventory::HousingItemPtr item ) const;
+
+
+    void reqMoveHousingItem( Entity::Player& player, Common::LandIdent ident, uint16_t slot,
+                             Common::FFXIVARR_POSITION3 pos, float rot );
+
+
+    void reqRemoveHousingItem( Sapphire::Entity::Player& player, uint16_t plot,
+                               uint16_t containerId, uint16_t slot,
+                               bool sendToStoreroom );
+
+    void reqEstateExteriorRemodel( Entity::Player& player, uint16_t plot );
+
+    void reqEstateInteriorRemodel( Entity::Player& player );
+
+    bool hasPermission( Entity::Player& player, Land& land, uint32_t permission );
+
   private:
+
+    ItemContainerPtr getFreeEstateInventorySlot( Common::LandIdent ident,
+                                                 Inventory::InventoryContainerPair& pair,
+                                                 Inventory::InventoryTypeList bagList );
+
+    /*!
+     *
+     * @param player
+     * @param terri
+     * @param containerId
+     * @param slotId
+     * @param sendToStoreroom
+     * @return
+     */
+    bool removeInternalItem( Entity::Player& player, Territory::Housing::HousingInteriorTerritory& terri,
+                             uint16_t containerId, uint16_t slotId, bool sendToStoreroom );
+
+    /*!
+     *
+     * @param player
+     * @param terri
+     * @param slotId
+     * @param sendToStoreroom
+     * @return
+     */
+    bool removeExternalItem( Entity::Player& player, HousingZone& terri, Land& land,
+                             Common::InventoryType containerType, uint16_t slotId,
+                             bool sendToStoreroom );
+
+    /*!
+     * @brief Processes the movement of an item placed in a HousingZone
+     *
+     * This function assumes that the player has permission to move the item.
+     *
+     * @param player The player who placed the item
+     * @param ident The ident of the land that the item belongs to
+     * @param containerIdx The index of the container
+     * @param slot The slot of the item
+     * @param pos The new position
+     * @param rot The new rotation
+     * @return true if moved successfully
+     */
+    bool moveExternalItem( Entity::Player& player, Common::LandIdent ident, uint16_t slot,
+                           Sapphire::HousingZone& terri, Common::FFXIVARR_POSITION3 pos, float rot );
+
+    /*!
+     * @brief Processes the movement of an item placed inside a HousingInteriorTerritory
+     *
+     * This function assumes that the player has permission to move the item.
+     *
+     * @param player The player who placed the item
+     * @param ident The ident of the land that the item belongs to
+     * @param slot The index of the container
+     * @param slotIdx The slot of the item
+     * @param pos The new position
+     * @param rot The new rotation
+     * @return true if moved successfully
+     */
+    bool moveInternalItem( Entity::Player& player, Common::LandIdent ident,
+                           Territory::Housing::HousingInteriorTerritory& terri, uint16_t slot,
+                           Common::FFXIVARR_POSITION3 pos, float rot );
+
+    /*!
+     * @brief Processes the spawning and linking of a newly placed housing item for external items
+     * @param player The player who is placing the item
+     * @param item The item that we're placing
+     * @param ident The land that is going to own the item
+     * @return true if the item was placed successfully, false if there's no free container slots to place it
+     */
+    bool placeExternalItem( Entity::Player& player, Inventory::HousingItemPtr item, Common::LandIdent ident );
+
+    /*!
+     * @brief Processing the spawning and linking of a newly placed item for interior items
+     * @param player The player who is placing the item
+     * @param item The item that we're placing
+     * @return true if the item was placed successfully, false if there's no free spots to place it
+     */
+    bool placeInteriorItem( Entity::Player& player, Inventory::HousingItemPtr item );
 
     /*!
      * @brief Creates a house and saves the minimum amount required to persist a house through restarts.
@@ -162,7 +281,7 @@ namespace Sapphire::World::Manager
     /*!
      * @brief Loads all the land entries from the database and caches them to speed up housing territory init
      */
-    void loadLandCache();
+    void initLandCache();
 
     /*!
      * @brief Loads all the inventories for every estate on the world and sets up their containers
@@ -177,8 +296,23 @@ namespace Sapphire::World::Manager
      */
     uint32_t getItemAdditionalData( uint32_t catalogId );
 
+    /*!
+     * @brief Checks whether an estate inventory contains items that are placed and have a world position
+     *
+     * Eg, any item inside the 'placed' items container _should_ have a world position and can be spawned.
+     *
+     * @param type The inventory type that contains items
+     * @return true if contains items that would have a world position
+     */
+    bool isPlacedItemsInventory( Common::InventoryType type );
+
     LandSetLandCacheMap m_landCache;
     LandIdentToInventoryContainerMap m_estateInventories;
+
+    Inventory::InventoryTypeList m_internalPlacedItemContainers;
+    Inventory::InventoryTypeList m_internalStoreroomContainers;
+
+    std::array< std::pair< Common::InventoryType, Common::InventoryType >, 8 > m_containerMap;
 
   };
 

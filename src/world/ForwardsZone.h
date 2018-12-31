@@ -25,10 +25,15 @@ TYPE_FORWARD( House );
 TYPE_FORWARD( InstanceContent );
 TYPE_FORWARD( Item );
 TYPE_FORWARD( ItemContainer );
-TYPE_FORWARD( Session );
 TYPE_FORWARD( ZonePosition );
-TYPE_FORWARD( Land )
-TYPE_FORWARD( Linkshell )
+TYPE_FORWARD( Land );
+TYPE_FORWARD( Linkshell );
+TYPE_FORWARD( Framework );
+
+namespace World
+{
+TYPE_FORWARD( Session );
+}
 
 namespace World::Territory::Housing
 {
@@ -37,6 +42,8 @@ TYPE_FORWARD( HousingInteriorTerritory );
 
 namespace Inventory
 {
+using InventoryContainerPair = std::pair< Common::InventoryType, uint8_t >;
+using InventoryTypeList = std::vector< Common::InventoryType >;
 TYPE_FORWARD( HousingItem );
 }
 
