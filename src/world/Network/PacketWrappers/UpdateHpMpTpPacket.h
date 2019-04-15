@@ -1,7 +1,7 @@
 #ifndef _UPDATEHPMPTP_H
 #define _UPDATEHPMPTP_H
 
-#include <Network/GamePacketNew.h>
+#include <Network/GamePacket.h>
 #include <Actor/Chara.h>
 #include "Forwards.h"
 
@@ -11,8 +11,7 @@ namespace Sapphire::Network::Packets::Server
   /**
   * @brief The Ping response packet.
   */
-  class UpdateHpMpTpPacket :
-    public ZoneChannelPacket< FFXIVIpcUpdateHpMpTp >
+  class UpdateHpMpTpPacket : public ZoneChannelPacket< FFXIVIpcUpdateHpMpTp >
   {
   public:
     UpdateHpMpTpPacket( Entity::Chara& actor ) :

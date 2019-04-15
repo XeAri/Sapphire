@@ -6,9 +6,6 @@
 #include <Util/UtilMath.h>
 #include <utility>
 
-#include "Action/Action.h"
-#include "Action/ActionCollision.h"
-
 #include "Territory/Zone.h"
 
 #include "Network/GameConnection.h"
@@ -53,6 +50,11 @@ Sapphire::Common::ObjKind Sapphire::Entity::Actor::getObjKind() const
 }
 
 Sapphire::Common::FFXIVARR_POSITION3& Sapphire::Entity::Actor::getPos()
+{
+  return m_pos;
+}
+
+const Sapphire::Common::FFXIVARR_POSITION3& Sapphire::Entity::Actor::getPos() const
 {
   return m_pos;
 }
@@ -345,6 +347,15 @@ Sapphire::InstanceContentPtr Sapphire::Entity::Actor::getCurrentInstance() const
 {
   if( m_pCurrentZone )
     return m_pCurrentZone->getAsInstanceContent();
+
+  return nullptr;
+}
+
+/*! \return QuestBattlePtr to the current instance, nullptr if not an instance or not set */
+Sapphire::QuestBattlePtr Sapphire::Entity::Actor::getCurrentQuestBattle() const
+{
+  if( m_pCurrentZone )
+    return m_pCurrentZone->getAsQuestBattle();
 
   return nullptr;
 }

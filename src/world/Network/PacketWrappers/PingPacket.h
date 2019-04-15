@@ -1,7 +1,7 @@
 #ifndef _CORE_NETWORK_PACKETS_PINGPACKET_H
 #define _CORE_NETWORK_PACKETS_PINGPACKET_H
 
-#include <Network/GamePacketNew.h>
+#include <Network/GamePacket.h>
 
 #include "Forwards.h"
 
@@ -11,8 +11,7 @@ namespace Sapphire::Network::Packets::Server
   /**
   * @brief The Ping response packet.
   */
-  class PingPacket :
-    public ZoneChannelPacket< FFXIVIpcPing >
+  class PingPacket : public ZoneChannelPacket< FFXIVIpcPing >
   {
   public:
     PingPacket( Entity::Player& player, int32_t inVal ) :

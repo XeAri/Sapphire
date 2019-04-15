@@ -11,6 +11,7 @@
 #include "Event/EventHandler.h"
 #include <map>
 #include <queue>
+#include <array>
 
 namespace Sapphire::Entity
 {
@@ -52,17 +53,16 @@ namespace Sapphire::Entity
     // EventHandlers
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     /*! start an event action */
-    void eventActionStart( uint32_t eventId, uint32_t action, ActionCallback finishCallback,
-                           ActionCallback interruptCallback, uint64_t additional );
+    void eventActionStart( uint32_t eventId, uint32_t action, Action::ActionCallback finishCallback,
+                           Action::ActionCallback interruptCallback, uint64_t additional );
 
     /*! start an event item action */
-    void eventItemActionStart( uint32_t eventId, uint32_t action, ActionCallback finishCallback,
-                               ActionCallback interruptCallback, uint64_t additional );
+    void eventItemActionStart( uint32_t eventId, uint32_t action, Action::ActionCallback finishCallback,
+                               Action::ActionCallback interruptCallback, uint64_t additional );
 
     /*! start/register a normal event */
-    void
-    eventStart( uint64_t actorId, uint32_t eventId, Event::EventHandler::EventType eventParam, uint8_t eventParam1,
-                uint32_t eventParam2, Event::EventHandler::EventFinishCallback callback = nullptr );
+    void eventStart( uint64_t actorId, uint32_t eventId, Event::EventHandler::EventType eventParam, uint8_t eventParam1,
+                     uint32_t eventParam2, Event::EventHandler::EventFinishCallback callback = nullptr );
 
     /*! play a subevent */
     void playScene( uint32_t eventId, uint32_t scene, uint32_t flags, uint32_t eventParam2, uint32_t eventParam3 );
@@ -70,9 +70,8 @@ namespace Sapphire::Entity
     void playGilShop( uint32_t eventId, uint32_t flags,
                       Event::EventHandler::SceneReturnCallback eventCallback );
 
-    void
-    directorPlayScene( uint32_t eventId, uint32_t scene, uint32_t flags, uint32_t eventParam3, uint32_t eventParam4,
-                       uint32_t eventParam5 = 0 );
+    void directorPlayScene( uint32_t eventId, uint32_t scene, uint32_t flags, uint32_t eventParam3,
+                            uint32_t eventParam4, uint32_t eventParam5 = 0 );
 
     /*! play a subevent */
     void playScene( uint32_t eventId, uint32_t scene, uint32_t flags,
@@ -148,7 +147,7 @@ namespace Sapphire::Entity
     void onDeath() override;
 
     /*! Event called on every session iteration */
-    void update( int64_t currTime ) override;
+    void update( uint64_t tickCount ) override;
 
     /*! Event to be called upon Bnpc kill */
     void onMobKill( uint16_t nameId );
@@ -321,7 +320,7 @@ namespace Sapphire::Entity
     void equipItem( Common::GearSetSlot equipSlotId, ItemPtr pItem, bool sendModel );
 
     /*! remove an item from an equipment slot */
-    void unequipItem( Common::GearSetSlot equipSlotId, ItemPtr pItem );
+    void unequipItem( Common::GearSetSlot equipSlotId, ItemPtr pItem, bool sendModel );
 
     /*! equip a weapon, possibly forcing a job change */
     void equipWeapon( ItemPtr pItem, bool updateClass );
@@ -531,7 +530,11 @@ namespace Sapphire::Entity
     void teleport( uint16_t aetheryteId, uint8_t type = 1 );
 
     /*! query teleport of a specified type */
-    void teleportQuery( uint16_t aetheryteId, FrameworkPtr pFw );
+    void teleportQuery( uint16_t aetheryteId );
+
+    Common::PlayerTeleportQuery getTeleportQuery() const;
+
+    void clearTeleportQuery();
 
     /*! prepares zoning / fades out the screen */
     void prepareZoning( uint16_t targetZone, bool fadeOut, uint8_t fadeOutTime = 0, uint16_t animation = 0 );
@@ -702,6 +705,9 @@ namespace Sapphire::Entity
 
     /*! load search info */
     bool loadSearchInfo();
+
+    /*! load hunting log entries */
+    bool loadHuntingLog();
 
     // Player Network Handling
     //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -958,6 +964,15 @@ namespace Sapphire::Entity
 
     Sapphire::ItemPtr dropInventoryItem( Common::InventoryType type, uint16_t slotId );
 
+    Common::HuntingLogEntry& getHuntingLogEntry( uint8_t index );
+
+    void sendHuntingLog();
+
+    void updateDbMonsterNote();
+
+    void updateHuntingLog( uint16_t id );
+
+    World::SessionPtr getSession();
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -968,6 +983,8 @@ namespace Sapphire::Entity
   private:
     uint32_t m_lastWrite;
     uint32_t m_lastPing;
+
+    World::SessionPtr m_pSession;
 
     bool m_bIsLogin;
 
@@ -1023,7 +1040,7 @@ namespace Sapphire::Entity
     uint8_t m_homePoint;
     uint8_t m_startTown;
     uint16_t m_townWarpFstFlags;
-    uint8_t m_questCompleteFlags[396];
+    uint8_t m_questCompleteFlags[476];
     uint8_t m_discovery[421];
     uint32_t m_playTime;
 
@@ -1086,8 +1103,13 @@ namespace Sapphire::Entity
     uint32_t m_mount;
     uint32_t m_emoteMode;
 
+    Common::PlayerTeleportQuery m_teleportQuery;
+
     Util::SpawnIndexAllocator< uint8_t > m_objSpawnIndexAllocator;
     Util::SpawnIndexAllocator< uint8_t > m_actorSpawnIndexAllocator;
+
+    std::array< Common::HuntingLogEntry, 12 > m_huntingLogEntries;
+
   };
 
 }

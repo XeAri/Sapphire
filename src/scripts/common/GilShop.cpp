@@ -31,7 +31,7 @@ private:
       // buy
       if( result.param2 == 1 )
       {
-        auto shopMgr = getFramework()->get< Sapphire::World::Manager::ShopMgr >();
+        auto shopMgr = framework()->get< Sapphire::World::Manager::ShopMgr >();
 
         shopMgr->purchaseGilShopItem( player, result.eventId, result.param3, result.param4 );
       }
@@ -56,3 +56,5 @@ private:
     player.playGilShop( result.eventId, SCENE_FLAGS, std::bind( &GilShop::shopInteractionCallback, this, std::placeholders::_1, std::placeholders::_2 ) );
   }
 };
+
+EXPOSE_SCRIPT( GilShop );

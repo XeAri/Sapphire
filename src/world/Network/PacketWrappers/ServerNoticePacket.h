@@ -1,7 +1,7 @@
 #ifndef _SERVERNOTICEPACKET_H
 #define _SERVERNOTICEPACKET_H
 
-#include <Network/GamePacketNew.h>
+#include <Network/GamePacket.h>
 #include <Network/PacketDef/Zone/ServerZoneDef.h>
 #include "Forwards.h"
 
@@ -11,8 +11,7 @@ namespace Sapphire::Network::Packets::Server
   /**
   * @brief The Ping response packet.
   */
-  class ServerNoticePacket :
-    public ZoneChannelPacket< FFXIVIpcServerNotice >
+  class ServerNoticePacket : public ZoneChannelPacket< FFXIVIpcServerNotice >
   {
   public:
     ServerNoticePacket( uint32_t playerId, const std::string& message ) :

@@ -21,6 +21,13 @@ namespace Sapphire::Common
   const int32_t INVALID_GAME_OBJECT_ID = 0xE0000000;
   const uint64_t INVALID_GAME_OBJECT_ID64 = 0xE0000000;
 
+  /*!
+   * @brief The maximum length (in ms) of a combo before it is canceled/voided.
+   *
+   * The client has a combo timer of about 12 seconds, with a 0.5 second grace on top for latency considerations.
+   */
+  const uint16_t MAX_COMBO_LENGTH = 12500;
+
   struct FFXIVARR_POSITION3_U16
   {
     uint16_t x;
@@ -263,6 +270,20 @@ namespace Sapphire::Common
 
   };
 
+  struct HuntingLogEntry
+  {
+    uint8_t rank;
+    uint8_t entries[10][4];
+  };
+
+  enum class UnlockEntry : uint16_t
+  {
+    Return = 1,
+    Teleport = 4,
+    GearSets = 6,
+    HuntingLog = 21,
+  };
+
   enum ContainerType : uint16_t
   {
     Unknown = 0,
@@ -374,8 +395,7 @@ namespace Sapphire::Common
     uint32_t sourceActorId;
   };
 
-  enum CharaLook :
-    uint8_t
+  enum CharaLook : uint8_t
   {
     Race = 0x00,
     Gender = 0x01,
@@ -406,8 +426,7 @@ namespace Sapphire::Common
 
   };
 
-  enum MoveType :
-    uint8_t
+  enum MoveType : uint8_t
   {
     Running = 0x00,
     Walking = 0x02,
@@ -415,8 +434,7 @@ namespace Sapphire::Common
     Jumping = 0x10,
   };
 
-  enum MoveState :
-    uint8_t
+  enum MoveState : uint8_t
   {
     No = 0x00,
     LeaveCollision = 0x01,
@@ -424,8 +442,7 @@ namespace Sapphire::Common
     StartFalling = 0x04,
   };
 
-  enum MoveSpeed :
-    uint8_t
+  enum MoveSpeed : uint8_t
   {
     Walk = 24,
     Run = 60,
@@ -525,8 +542,7 @@ namespace Sapphire::Common
 
   };
 
-  enum struct ActionAspect :
-    uint8_t
+  enum struct ActionAspect : uint8_t
   {
     None = 0,   // Doesn't imply unaspected
     Fire = 1,
@@ -536,6 +552,21 @@ namespace Sapphire::Common
     Lightning = 5,
     Water = 6,
     Unaspected = 7    // Doesn't imply magical unaspected damage - could be unaspected physical
+  };
+
+  enum class ActionPrimaryCostType : uint8_t
+  {
+    None = 0, // ?
+    MagicPoints = 3,
+    TacticsPoints = 5,
+//    WARGauge = 22,
+//    DRKGauge = 25,
+//    AetherflowStack = 30,
+//    Status = 32,
+//    PLDGauge = 41,
+//    RDMGaugeBoth = 74,
+////  RDMGaugeBlack = 75, // not right?
+//    DRGGauge3Eyes = 76,
   };
 
   enum class ActionType : int8_t
@@ -569,6 +600,13 @@ namespace Sapphire::Common
     TpLoss = 12,
     TpGain = 13,
     GpGain = 14,
+    /*!
+     * @brief Tells the client that it should show combo indicators on actions.
+     *
+     * @param flags Required to be 128, doesn't show combo rings on hotbars otherwise
+     * @param value The actionid that starts/continues the combo. eg, 3617 will start a spinning slash and/or syphon strike combo
+     */
+    StartActionCombo = 28,
     Knockback = 33,
     Mount = 38,
     VFX = 59, // links to VFX sheet
@@ -584,11 +622,33 @@ namespace Sapphire::Common
     CritDirectHitDamage = 3
   };
 
+  enum ItemActionType : uint16_t
+  {
+    ItemActionVFX = 852,
+    ItemActionVFX2 = 944,
+  };
+
   enum ActionEffectDisplayType : uint8_t
   {
     HideActionName = 0,
     ShowActionName = 1,
     ShowItemName = 2,
+  };
+
+  struct EffectEntry
+  {
+    Common::ActionEffectType effectType;
+    Common::ActionHitSeverityType hitSeverity;
+    uint8_t param;
+    /*!
+     * @brief Shows an additional percentage in the battle log
+     *
+     * Has no effect on what is shown and stored in value
+     */
+    int8_t bonusPercent;
+    uint8_t valueMultiplier;      // This multiplies whatever value is in the 'value' param by 10. Possibly a workaround for big numbers
+    uint8_t flags;
+    int16_t value;
   };
 
   enum class ActionCollisionType : uint8_t
@@ -602,6 +662,13 @@ namespace Sapphire::Common
     Unknown2,
     PersistentArea, // for when you set aoe like asylum
     Unknown3
+  };
+
+  enum class ActionInterruptType : uint8_t
+  {
+    None,
+    RegularInterrupt,
+    DamageInterrupt,
   };
 
   enum HandleActionType : uint8_t
@@ -755,8 +822,7 @@ namespace Sapphire::Common
     Unused100
   };
 
-  enum EquipDisplayFlags :
-    uint8_t
+  enum EquipDisplayFlags : uint8_t
   {
     HideNothing = 0x0,
     HideHead = 0x1,
@@ -769,8 +835,7 @@ namespace Sapphire::Common
     Visor = 0x40,
   };
 
-  enum SkillType :
-    uint8_t
+  enum SkillType : uint8_t
   {
     Normal = 0x1,
     ItemAction = 0x2,
@@ -887,6 +952,31 @@ namespace Sapphire::Common
     HasEstateGreeting = 4,
     EstateFlagUnknown = 8,
     IsFreeCompanyEstate = 16,
+  };
+
+  struct PlayerTeleportQuery
+  {
+    uint16_t targetAetheryte;
+    uint16_t cost;
+  };
+
+  enum LevelTableEntry : uint8_t
+  {
+    PIE,
+    MP,
+    MAIN,
+    SUB,
+    DIV,
+    HP,
+    ELMT,
+    THREAT
+  };
+
+  enum CastType : uint8_t
+  {
+    SingleTarget = 1,
+    CircularAOE = 2,
+    RectangularAOE = 4,
   };
 
   using PlayerStateFlagList = std::vector< PlayerStateFlag >;

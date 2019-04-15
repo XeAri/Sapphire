@@ -34,8 +34,6 @@ namespace Sapphire
     m_pConfig = std::make_shared< ConfigMgr >();
   }
 
-  ServerLobby::~ServerLobby( void ) = default;
-
   LobbySessionPtr ServerLobby::getSession( char* sessionId )
   {
     return g_restConnector.getSession( sessionId );
@@ -73,7 +71,7 @@ namespace Sapphire
 
     std::vector< std::thread > threadGroup;
 
-    threadGroup.emplace_back( std::bind( &Network::Hive::Run, hive.get() ) );
+    threadGroup.emplace_back( std::bind( &Network::Hive::run, hive.get() ) );
 
     for( auto& thread : threadGroup )
       if( thread.joinable() )

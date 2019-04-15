@@ -32,12 +32,12 @@ foreach(_scriptDir ${children})
 
             if(NOT ${_scriptname} MATCHES "ScriptLoader")
                 if(ScriptIncludes)
-                    set(ScriptIncludes "${ScriptIncludes}\n#include \"${_script}\"")
+                    set(ScriptIncludes "${ScriptIncludes}\nextern Sapphire::ScriptAPI::ScriptObject* makeScript${_scriptname}();")
                 else()
-                    set(ScriptIncludes "#include \"${_script}\"")
+                    set(ScriptIncludes "extern Sapphire::ScriptAPI::ScriptObject* makeScript${_scriptname}();")
                 endif()
 
-                set(ScriptNames "${ScriptNames}   static_cast< Sapphire::ScriptAPI::ScriptObject* >( new ${_scriptname} ),\n")
+                set(ScriptNames "${ScriptNames}   makeScript${_scriptname}(),\n")
             endif()
         endforeach()
 
@@ -55,8 +55,8 @@ foreach(_scriptDir ${children})
 
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/ScriptLoader.cpp.in" "${_scriptDir}/ScriptLoader.cpp")
 
-	if( UNIX )
-          cotire("script_${_name}")
+        if( UNIX )
+            cotire("script_${_name}")
         endif()
 
         if(MSVC)

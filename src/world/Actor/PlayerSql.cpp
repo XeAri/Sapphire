@@ -31,6 +31,7 @@ bool Sapphire::Entity::Player::load( uint32_t charId, World::SessionPtr pSession
 {
   auto pDb = m_pFw->get< Db::DbWorkerPool< Db::ZoneDbConnection > >();
   auto pTeriMgr = m_pFw->get< TerritoryMgr >();
+  m_pSession = pSession;
 
   const std::string char_id_str = std::to_string( charId );
 
@@ -205,7 +206,7 @@ bool Sapphire::Entity::Player::load( uint32_t charId, World::SessionPtr pSession
 
   m_pCell = nullptr;
 
-  if( !loadActiveQuests() || !loadClassData() || !loadSearchInfo() )
+  if( !loadActiveQuests() || !loadClassData() || !loadSearchInfo() || !loadHuntingLog() )
     Logger::error( "Player #{0}  data corrupt!", char_id_str );
 
   m_maxHp = getMaxHp();
@@ -333,6 +334,26 @@ bool Sapphire::Entity::Player::loadSearchInfo()
   return true;
 }
 
+
+bool Sapphire::Entity::Player::loadHuntingLog()
+{
+  auto pDb = m_pFw->get< Db::DbWorkerPool< Db::ZoneDbConnection > >();
+  auto stmt = pDb->getPreparedStatement( Db::ZoneDbStatements::CHARA_MONSTERNOTE_SEL );
+  stmt->setUInt( 1, m_id );
+  auto res = pDb->query( stmt );
+
+  if( !res->next() )
+    return false;
+
+  for( auto i = 0; i < 12; ++i )
+  {
+    std::string catStr = fmt::format( "Category_{}", i );
+    auto cat = res->getBlobVector( catStr );
+    m_huntingLogEntries[i].rank = cat[0];
+    memcpy( reinterpret_cast< char* >( m_huntingLogEntries[i].entries ), cat.data() + 1, cat.size() - 1 );
+  }
+  return true;
+}
 
 void Sapphire::Entity::Player::updateSql()
 {
@@ -474,6 +495,9 @@ void Sapphire::Entity::Player::updateSql()
   ////// Class
   updateDbClass();
 
+  ////// MonterNote
+  updateDbMonsterNote();
+
 }
 
 void Sapphire::Entity::Player::updateDbClass() const
@@ -489,6 +513,26 @@ void Sapphire::Entity::Player::updateDbClass() const
   stmtS->setInt( 3, m_id );
   stmtS->setInt( 4, classJobIndex );
   pDb->execute( stmtS );
+}
+
+void Sapphire::Entity::Player::updateDbMonsterNote()
+{
+  auto pDb = m_pFw->get< Db::DbWorkerPool< Db::ZoneDbConnection > >();
+  // Category_0-11
+  auto stmt = pDb->getPreparedStatement( Db::CHARA_MONSTERNOTE_UP );
+  //std::array< std::vector< uint8_t >, 12 > vectors;
+  std::vector< uint8_t > vector( 41 );
+  for( std::size_t i = 0; i < m_huntingLogEntries.size(); ++i )
+  {
+    vector[ 0 ] = m_huntingLogEntries[ i ].rank;
+
+    memcpy( &vector[ 1 ],
+            reinterpret_cast< uint8_t* >( m_huntingLogEntries[ i ].entries ),
+            40 );
+    stmt->setBinary( i + 1, vector );
+  }
+  stmt->setInt( 13, m_id );
+  pDb->execute( stmt );
 }
 
 void Sapphire::Entity::Player::insertDbClass( const uint8_t classJobIndex ) const

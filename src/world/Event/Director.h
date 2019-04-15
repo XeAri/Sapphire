@@ -29,7 +29,15 @@ namespace Sapphire::Event
       GoldSaucer = 0x800A,
       DpsChallange = 0x800D,
       Fate = 0x801A
+    };
 
+    enum DirectorState
+    {
+      Created,
+      DutyReset,
+      DutyInProgress,
+      DutyFinished,
+      DutyFailed
     };
 
     Director( DirectorType type, uint16_t contentId );

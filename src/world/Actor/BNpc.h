@@ -13,11 +13,11 @@
 namespace Sapphire::Entity
 {
 
-  typedef struct
+  struct HateListEntry
   {
     uint32_t m_hateAmount;
     CharaPtr m_pChara;
-  } HateListEntry;
+  };
 
   enum class BNpcState
   {
@@ -84,7 +84,7 @@ namespace Sapphire::Entity
     void aggro( CharaPtr pChara );
     void deaggro( CharaPtr pChara );
 
-    void update( int64_t currTime ) override;
+    void update( uint64_t tickCount ) override;
     void onTick() override;
 
     void onActionHostile( CharaPtr pSource ) override;
@@ -99,6 +99,8 @@ namespace Sapphire::Entity
     void checkAggro();
 
     void pushNearbyBNpcs();
+
+    void setOwner( CharaPtr m_pChara );
 
   private:
     uint32_t m_bNpcBaseId;
@@ -129,6 +131,8 @@ namespace Sapphire::Entity
     std::vector< Common::FFXIVARR_POSITION3 > m_naviLastPath;
     uint8_t m_naviPathStep;
     Common::FFXIVARR_POSITION3 m_naviTarget;
+
+    CharaPtr m_pOwner;
 
   };
 

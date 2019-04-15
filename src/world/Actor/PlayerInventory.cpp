@@ -147,22 +147,6 @@ void Sapphire::Entity::Player::equipSoulCrystal( ItemPtr pItem, bool updateJob )
     setClassJob( newClassJob );
 }
 
-// equip an item
-void Sapphire::Entity::Player::equipItem( Common::GearSetSlot equipSlotId, ItemPtr pItem, bool sendUpdate )
-{
-
-  //g_framework.getLogger().debug( "Equipping into slot " + std::to_string( equipSlotId ) );
-  if( sendUpdate )
-  {
-    updateModels( equipSlotId, pItem, true );
-    this->sendModel();
-    m_itemLevel = calculateEquippedGearItemLevel();
-    sendItemLevel();
-  }
-  else
-    updateModels( equipSlotId, pItem, false );
-}
-
 void Sapphire::Entity::Player::updateModels( GearSetSlot equipSlotId, const Sapphire::ItemPtr& pItem, bool updateClass )
 {
   uint64_t model = pItem->getModelId1();
@@ -230,18 +214,74 @@ Sapphire::Common::GearModelSlot Sapphire::Entity::Player::equipSlotToModelSlot( 
   }
 }
 
-void Sapphire::Entity::Player::unequipItem( Common::GearSetSlot equipSlotId, ItemPtr pItem )
+// equip an item
+void Sapphire::Entity::Player::equipItem( Common::GearSetSlot equipSlotId, ItemPtr pItem, bool sendUpdate )
+{
+
+  //g_framework.getLogger().debug( "Equipping into slot " + std::to_string( equipSlotId ) );
+  if( sendUpdate )
+  {
+    updateModels( equipSlotId, pItem, true );
+    sendModel();
+    m_itemLevel = calculateEquippedGearItemLevel();
+    sendItemLevel();
+  }
+  else
+    updateModels( equipSlotId, pItem, false );
+
+  auto baseParams = pItem->getBaseParams();
+  for( auto i = 0; i < 6; ++i )
+  {
+    if( baseParams[ i ].baseParam != static_cast< uint8_t >( Common::BaseParam::None ) )
+      m_bonusStats[ baseParams[ i ].baseParam ] += baseParams[ i ].value;
+  }
+
+  m_bonusStats[ static_cast< uint8_t >( Common::BaseParam::Defense ) ] += pItem->getDefense();
+  m_bonusStats[ static_cast< uint8_t >( Common::BaseParam::MagicDefense ) ] += pItem->getDefenseMag();
+
+  calculateStats();
+  if( sendUpdate )
+  {
+    sendStats();
+    sendStatusUpdate();
+  }
+}
+
+
+void Sapphire::Entity::Player::unequipItem( Common::GearSetSlot equipSlotId, ItemPtr pItem, bool sendUpdate )
 {
   auto modelSlot = equipSlotToModelSlot( equipSlotId );
   if( modelSlot != GearModelSlot::ModelInvalid )
     m_modelEquip[ static_cast< uint8_t >( modelSlot ) ] = 0;
-  sendModel();
 
-  m_itemLevel = calculateEquippedGearItemLevel();
-  sendItemLevel();
+  if( sendUpdate )
+  {
+    sendModel();
+
+    m_itemLevel = calculateEquippedGearItemLevel();
+    sendItemLevel();
+  }
 
   if ( equipSlotId == SoulCrystal )
     unequipSoulCrystal( pItem );
+
+  auto baseParams = pItem->getBaseParams();
+  for( auto i = 0; i < 6; ++i )
+  {
+    if( baseParams[ i ].baseParam != static_cast< uint8_t >( Common::BaseParam::None ) )
+      m_bonusStats[ baseParams[ i ].baseParam ] -= baseParams[ i ].value;
+  }
+
+  m_bonusStats[ static_cast< uint8_t >( Common::BaseParam::Defense ) ] -= pItem->getDefense();
+  m_bonusStats[ static_cast< uint8_t >( Common::BaseParam::MagicDefense ) ] -= pItem->getDefenseMag();
+
+  calculateStats();
+
+  if( sendUpdate )
+  {
+    sendStats();
+    sendStatusUpdate();
+  }
 }
 
 void Sapphire::Entity::Player::unequipSoulCrystal( ItemPtr pItem )
@@ -614,7 +654,7 @@ Sapphire::Entity::Player::moveItem( uint16_t fromInventoryId, uint8_t fromSlotId
     equipItem( static_cast< GearSetSlot >( toSlot ), tmpItem, true );
 
   if( static_cast< InventoryType >( fromInventoryId ) == GearSet0 )
-    unequipItem( static_cast< GearSetSlot >( fromSlotId ), tmpItem );
+    unequipItem( static_cast< GearSetSlot >( fromSlotId ), tmpItem, true );
 
 
 }
@@ -623,6 +663,7 @@ bool Sapphire::Entity::Player::updateContainer( uint16_t storageId, uint8_t slot
 {
   auto containerType = World::Manager::ItemMgr::getContainerType( storageId );
 
+  auto pOldItem = getItemAt( storageId, slotId );
   m_storageMap[ storageId ]->setItem( slotId, pItem );
 
   switch( containerType )
@@ -638,9 +679,13 @@ bool Sapphire::Entity::Player::updateContainer( uint16_t storageId, uint8_t slot
     case GearSet:
     {
       if( pItem )
+      {
+        if( pOldItem )
+          unequipItem( static_cast< GearSetSlot >( slotId ), pOldItem, false );
         equipItem( static_cast< GearSetSlot >( slotId ), pItem, true );
+      }
       else
-        unequipItem( static_cast< GearSetSlot >( slotId ), pItem );
+        unequipItem( static_cast< GearSetSlot >( slotId ), pItem, true );
 
       writeInventory( static_cast< InventoryType >( storageId ) );
       break;
@@ -653,7 +698,7 @@ bool Sapphire::Entity::Player::updateContainer( uint16_t storageId, uint8_t slot
 }
 
 void Sapphire::Entity::Player::splitItem( uint16_t fromInventoryId, uint8_t fromSlotId,
-                                      uint16_t toInventoryId, uint8_t toSlot, uint16_t itemCount )
+                                          uint16_t toInventoryId, uint8_t toSlot, uint16_t itemCount )
 {
   if( itemCount == 0 )
     return;
@@ -686,7 +731,7 @@ void Sapphire::Entity::Player::splitItem( uint16_t fromInventoryId, uint8_t from
 }
 
 void Sapphire::Entity::Player::mergeItem( uint16_t fromInventoryId, uint8_t fromSlotId,
-                                      uint16_t toInventoryId, uint8_t toSlot )
+                                          uint16_t toInventoryId, uint8_t toSlot )
 {
   auto fromItem = m_storageMap[ fromInventoryId ]->getItem( fromSlotId );
   auto toItem = m_storageMap[ toInventoryId ]->getItem( toSlot );
@@ -721,7 +766,7 @@ void Sapphire::Entity::Player::mergeItem( uint16_t fromInventoryId, uint8_t from
 }
 
 void Sapphire::Entity::Player::swapItem( uint16_t fromInventoryId, uint8_t fromSlotId,
-                                     uint16_t toInventoryId, uint8_t toSlot )
+                                         uint16_t toInventoryId, uint8_t toSlot )
 {
   auto fromItem = m_storageMap[ fromInventoryId ]->getItem( fromSlotId );
   auto toItem = m_storageMap[ toInventoryId ]->getItem( toSlot );
@@ -751,7 +796,7 @@ void Sapphire::Entity::Player::swapItem( uint16_t fromInventoryId, uint8_t fromS
 void Sapphire::Entity::Player::discardItem( uint16_t fromInventoryId, uint8_t fromSlotId )
 {
   // i am not entirely sure how this should be generated or if it even is important for us...
-  uint32_t transactionId = getNextInventorySequence();
+  uint32_t sequence = getNextInventorySequence();
 
   auto fromItem = m_storageMap[ fromInventoryId ]->getItem( fromSlotId );
 
@@ -761,7 +806,7 @@ void Sapphire::Entity::Player::discardItem( uint16_t fromInventoryId, uint8_t fr
   updateContainer( fromInventoryId, fromSlotId, nullptr );
 
   auto invTransPacket = makeZonePacket< FFXIVIpcInventoryTransaction >( getId() );
-  invTransPacket->data().transactionId = transactionId;
+  invTransPacket->data().sequence = sequence;
   invTransPacket->data().ownerId = getId();
   invTransPacket->data().storageId = fromInventoryId;
   invTransPacket->data().catalogId = fromItem->getId();
@@ -771,8 +816,8 @@ void Sapphire::Entity::Player::discardItem( uint16_t fromInventoryId, uint8_t fr
   queuePacket( invTransPacket );
 
   auto invTransFinPacket = makeZonePacket< FFXIVIpcInventoryTransactionFinish >( getId() );
-  invTransFinPacket->data().transactionId = transactionId;
-  invTransFinPacket->data().transactionId1 = transactionId;
+  invTransFinPacket->data().sequenceId = sequence;
+  invTransFinPacket->data().sequenceId1 = sequence;
   queuePacket( invTransFinPacket );
 }
 
@@ -883,7 +928,7 @@ Sapphire::ItemPtr Sapphire::Entity::Player::dropInventoryItem( Sapphire::Common:
 
   // send inv update
   auto invTransPacket = makeZonePacket< FFXIVIpcInventoryTransaction >( getId() );
-  invTransPacket->data().transactionId = seq;
+  invTransPacket->data().sequence = seq;
   invTransPacket->data().ownerId = getId();
   invTransPacket->data().storageId = type;
   invTransPacket->data().catalogId = item->getId();
@@ -893,8 +938,8 @@ Sapphire::ItemPtr Sapphire::Entity::Player::dropInventoryItem( Sapphire::Common:
   queuePacket( invTransPacket );
 
   auto invTransFinPacket = makeZonePacket< FFXIVIpcInventoryTransactionFinish >( getId() );
-  invTransFinPacket->data().transactionId = seq;
-  invTransFinPacket->data().transactionId1 = seq;
+  invTransFinPacket->data().sequenceId = seq;
+  invTransFinPacket->data().sequenceId1 = seq;
   queuePacket( invTransFinPacket );
 
   return item;

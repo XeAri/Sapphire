@@ -8,6 +8,7 @@
 #include <set>
 #include <map>
 #include <queue>
+#include <array>
 
 namespace Sapphire::Entity
 {
@@ -65,6 +66,9 @@ namespace Sapphire::Entity
 
     } m_baseStats;
 
+    // array for bonuses, 80 to have some spare room.
+    std::array< uint32_t, 80 > m_bonusStats;
+
   protected:
     char m_name[34];
     /*! Last tick time for the actor  ( in ms ) */
@@ -99,6 +103,17 @@ namespace Sapphire::Entity
     uint64_t m_targetId;
     /*! Ptr to a queued action */
     Action::ActionPtr m_pCurrentAction;
+
+    /*!
+     * @brief the id of the last combo action used (IgnoresCombo)
+     */
+    uint32_t m_lastComboActionId;
+
+    /*!
+     * @brief when the last combo action was used in ms
+     */
+    uint64_t m_lastComboActionTime;
+
     /*! Invincibility type */
     Common::InvincibilityType m_invincibilityType;
 
@@ -180,8 +195,6 @@ namespace Sapphire::Entity
 
     Common::ClassJob getClass() const;
 
-    uint8_t getClassAsInt() const;
-
     void setClass( Common::ClassJob classJob );
 
     void setTargetId( uint64_t targetId );
@@ -204,6 +217,8 @@ namespace Sapphire::Entity
 
     void setGp( uint32_t gp );
 
+    void setTp( uint32_t tp );
+
     void setInvincibilityType( Common::InvincibilityType type );
 
     void die();
@@ -211,9 +226,6 @@ namespace Sapphire::Entity
     Common::ActorStatus getStatus() const;
 
     void setStatus( Common::ActorStatus status );
-
-    void
-    handleScriptSkill( uint32_t type, uint16_t actionId, uint64_t param1, uint64_t param2, Entity::Chara& target );
 
     virtual void autoAttack( CharaPtr pTarget );
 
@@ -239,11 +251,16 @@ namespace Sapphire::Entity
 
     virtual bool checkAction();
 
-    virtual void update( int64_t currTime );
+    virtual void update( uint64_t tickCount );
 
     Action::ActionPtr getCurrentAction() const;
 
     void setCurrentAction( Action::ActionPtr pAction );
+
+    uint32_t getLastComboActionId() const;
+    void setLastComboActionId( uint32_t actionId );
+
+    uint32_t getBonusStat( Common::BaseParam bonus ) const;
 
   };
 

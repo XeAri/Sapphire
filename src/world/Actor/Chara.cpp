@@ -7,7 +7,6 @@
 
 
 #include "Forwards.h"
-#include "Action/Action.h"
 
 #include "Territory/Zone.h"
 
@@ -19,7 +18,7 @@
 #include "Network/PacketWrappers/EffectPacket.h"
 
 #include "StatusEffect/StatusEffect.h"
-#include "Action/ActionCollision.h"
+#include "Action/Action.h"
 #include "ServerMgr.h"
 #include "Session.h"
 #include "Math/CalcBattle.h"
@@ -43,6 +42,8 @@ Sapphire::Entity::Chara::Chara( ObjKind type, FrameworkPtr pFw ) :
 
   m_lastTickTime = 0;
   m_lastUpdate = 0;
+
+  m_bonusStats.fill( 0 );
 
   // initialize the free slot queue
   for( uint8_t i = 0; i < MAX_STATUS_EFFECTS; i++ )
@@ -107,12 +108,6 @@ InvincibilityType Sapphire::Entity::Chara::getInvincibilityType() const
 Sapphire::Common::ClassJob Sapphire::Entity::Chara::getClass() const
 {
   return m_class;
-}
-
-/*! \return current class or job as int32_t ( this feels pointless ) */
-uint8_t Sapphire::Entity::Chara::getClassAsInt() const
-{
-  return static_cast< uint8_t >( m_class );
 }
 
 /*! \param ClassJob to set */
@@ -183,6 +178,13 @@ void Sapphire::Entity::Chara::setMp( uint32_t mp )
 void Sapphire::Entity::Chara::setGp( uint32_t gp )
 {
   m_gp = gp;
+  sendStatusUpdate();
+}
+
+/*! \param tp amount to set*/
+void Sapphire::Entity::Chara::setTp( uint32_t tp )
+{
+  m_tp = tp;
   sendStatusUpdate();
 }
 
@@ -282,16 +284,16 @@ bool Sapphire::Entity::Chara::checkAction()
 
 }
 
-void Sapphire::Entity::Chara::update( int64_t currTime )
+void Sapphire::Entity::Chara::update( uint64_t tickCount )
 {
-  if( std::difftime( currTime, m_lastTickTime ) > 3000 )
+  if( std::difftime( tickCount, m_lastTickTime ) > 3000 )
   {
     onTick();
 
-    m_lastTickTime = currTime;
+    m_lastTickTime = tickCount;
   }
 
-  m_lastUpdate = currTime;
+  m_lastUpdate = tickCount;
 }
 
 /*!
@@ -393,6 +395,11 @@ void Sapphire::Entity::Chara::setCurrentAction( Sapphire::Action::ActionPtr pAct
   m_pCurrentAction = std::move( pAction );
 }
 
+uint32_t Sapphire::Entity::Chara::getBonusStat( Common::BaseParam bonus ) const
+{
+  return m_bonusStats[ static_cast< uint8_t >( bonus ) ];
+}
+
 /*!
 Autoattack prototype implementation
 TODO: move the check if the autoAttack can be performed to the callee
@@ -418,7 +425,7 @@ void Sapphire::Entity::Chara::autoAttack( CharaPtr pTarget )
 
     auto effectPacket = std::make_shared< Server::EffectPacket >( getId(), pTarget->getId(), 7 );
     effectPacket->setRotation( Util::floatToUInt16Rot( getRot() ) );
-    Server::EffectEntry effectEntry{};
+    Common::EffectEntry effectEntry{};
     effectEntry.value = damage;
     effectEntry.effectType = ActionEffectType::Damage;
     effectEntry.hitSeverity = ActionHitSeverityType::NormalDamage;
@@ -428,145 +435,6 @@ void Sapphire::Entity::Chara::autoAttack( CharaPtr pTarget )
 
     pTarget->takeDamage( damage );
 
-  }
-}
-
-/*!
-Skill Handler.
-
-\param GamePacketPtr to send
-\param bool should be send to self?
-*/
-void Sapphire::Entity::Chara::handleScriptSkill( uint32_t type, uint16_t actionId, uint64_t param1,
-                                                 uint64_t param2, Entity::Chara& target )
-{
-  auto pExdData = m_pFw->get< Data::ExdDataGenerated >();
-  if( isPlayer() )
-  {
-    getAsPlayer()->sendDebug( "{0}", target.getId() );
-    getAsPlayer()->sendDebug( "Handle script skill type: {0}", type );
-  }
-
-  auto actionInfoPtr = pExdData->get< Sapphire::Data::Action >( actionId );
-
-  // Todo: Effect packet generator. 90% of this is basically setting params and it's basically unreadable.
-  // Prepare packet. This is seemingly common for all packets in the action handler.
-
-  auto effectPacket = std::make_shared< Server::EffectPacket >( getId(), target.getId(), actionId );
-  effectPacket->setRotation( Util::floatToUInt16Rot( getRot() ) );
-
-  // Todo: for each actor, calculate how much damage the calculated value should deal to them - 2-step damage calc. we only have 1-step
-  switch( type )
-  {
-
-    case ActionEffectType::Damage:
-    {
-      Server::EffectEntry effectEntry{};
-      effectEntry.value = static_cast< uint16_t >( param1 );
-      effectEntry.effectType = ActionEffectType::Damage;
-      effectEntry.hitSeverity = ActionHitSeverityType::NormalDamage;
-
-      effectPacket->addEffect( effectEntry );
-
-      if( ( actionInfoPtr->castType == 1 && actionInfoPtr->effectRange != 0 ) ||
-	  ( actionInfoPtr->castType != 1 ) )
-      {
-        // If action on this specific target is valid...
-        if( isPlayer() && !ActionCollision::isActorApplicable( target, TargetFilter::Enemies ) )
-          break;
-
-        sendToInRangeSet( effectPacket, true );
-
-        if( target.isAlive() )
-          target.onActionHostile( getAsChara() );
-
-        target.takeDamage( static_cast< uint32_t >( param1 ) );
-
-      }
-      else
-      {
-
-        auto actorsCollided = ActionCollision::getActorsHitFromAction( target.getPos(), getInRangeActors( true ),
-                                                                       actionInfoPtr, TargetFilter::Enemies );
-
-        for( const auto& pHitActor : actorsCollided )
-        {
-          effectPacket->setTargetActor( pHitActor->getId() );
-
-          // todo: send to range of what? ourselves? when mob script hits this is going to be lacking
-          sendToInRangeSet( effectPacket, true );
-
-
-          if( pHitActor->getAsChara()->isAlive() )
-            pHitActor->getAsChara()->onActionHostile( getAsChara() );
-
-          pHitActor->getAsChara()->takeDamage( static_cast< uint32_t >( param1 ) );
-
-          // Debug
-          if( isPlayer() )
-          {
-            if( pHitActor->isPlayer() )
-              getAsPlayer()->sendDebug( "AoE hit actor#{0} ({1})", pHitActor->getId(), pHitActor->getAsChara()->getName() );
-            else
-              getAsPlayer()->sendDebug( "AoE hit actor#{0}", pHitActor->getId() );
-          }
-        }
-      }
-
-      break;
-    }
-
-    case ActionEffectType::Heal:
-    {
-      uint32_t calculatedHeal = Math::CalcBattle::calculateHealValue( getAsPlayer(),
-                                                                      static_cast< uint32_t >( param1 ),
-                                                                      m_pFw );
-
-      Server::EffectEntry effectEntry{};
-      effectEntry.value = calculatedHeal;
-      effectEntry.effectType = ActionEffectType::Heal;
-      effectEntry.hitSeverity = ActionHitSeverityType::NormalHeal;
-
-      effectPacket->addEffect( effectEntry );
-
-      if( ( actionInfoPtr->castType == 1 && actionInfoPtr->effectRange != 0 ) || actionInfoPtr->castType != 1 )
-      {
-        if( isPlayer() && !ActionCollision::isActorApplicable( target, TargetFilter::Allies ) )
-          break;
-
-        sendToInRangeSet( effectPacket, true );
-        target.heal( calculatedHeal );
-      }
-      else
-      {
-        // todo: get proper packets: the following was just kind of thrown together from what we know.
-        // atm buggy (packets look "delayed" from client)
-
-        auto actorsCollided = ActionCollision::getActorsHitFromAction( target.getPos(), getInRangeActors( true ),
-                                                                       actionInfoPtr, TargetFilter::Allies );
-
-        for( const auto& pHitActor : actorsCollided )
-        {
-          effectPacket->setTargetActor( pHitActor->getId() );
-
-          sendToInRangeSet( effectPacket, true );
-          pHitActor->getAsChara()->heal( calculatedHeal );
-
-          // Debug
-          if( isPlayer() )
-          {
-            if( pHitActor->isPlayer() )
-              getAsPlayer()->sendDebug( "AoE hit actor#{0} ({1})", pHitActor->getId(), pHitActor->getAsChara()->getName() );
-            else
-              getAsPlayer()->sendDebug( "AoE hit actor#{0}", pHitActor->getId() );
-          }
-        }
-      }
-      break;
-    }
-
-    default:
-      break;
   }
 }
 
@@ -798,4 +666,23 @@ bool Sapphire::Entity::Chara::hasStatusEffect( uint32_t id )
 int64_t Sapphire::Entity::Chara::getLastUpdateTime() const
 {
   return m_lastUpdate;
+}
+
+void Sapphire::Entity::Chara::setLastComboActionId( uint32_t actionId )
+{
+  m_lastComboActionId = actionId;
+  m_lastComboActionTime = Util::getTimeMs();
+}
+
+uint32_t Sapphire::Entity::Chara::getLastComboActionId() const
+{
+  // initially check for the time passed first, if it's more than the threshold just return 0 for the combo
+  // we can hide the implementation detail this way and it just works:tm: for anything that uses it
+
+  if( std::difftime( Util::getTimeMs(), m_lastComboActionTime ) > Common::MAX_COMBO_LENGTH )
+  {
+    return 0;
+  }
+
+  return m_lastComboActionId;
 }

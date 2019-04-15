@@ -80,6 +80,7 @@ namespace Sapphire::Network::Packets
     InitSearchInfo = 0x0107, // updated 4.4
     ExamineSearchComment = 0x0102, // updated 4.1
 
+    ServerNoticeShort = 0x010B, // added 4.5
     ServerNotice = 0x010C, // updated 4.5
     SetOnlineStatus = 0x010D, // updated 4.5
 
@@ -154,6 +155,8 @@ namespace Sapphire::Network::Packets
 
     InventoryActionAck = 0x019D, // updated 4.5
     UpdateInventorySlot = 0x019E, // updated 4.5
+
+    HuntingLogEntry = 0x01A9, // added 4.5
 
     EventPlay = 0x01AB, // updated 4.5
     DirectorPlayScene = 0x01AF, // updated 4.5
@@ -304,6 +307,7 @@ namespace Sapphire::Network::Packets
     SkillHandler = 0x013B, // updated 4.5
     GMCommand1 = 0x013C, // updated 4.5
     GMCommand2 = 0x013D, // updated 4.5
+    AoESkillHandler = 0x13E, // updated 4.5
 
     UpdatePositionHandler = 0x013F, // updated 4.5
     UpdatePositionInstance = 0x0183, // updated 4.3
@@ -324,8 +328,8 @@ namespace Sapphire::Network::Packets
     ReturnEventHandler = 0x0158, // updated 4.5
     TradeReturnEventHandler = 0x0159, // updated 4.5
 
-    LinkshellEventHandler = 0x1150, // updated 4.1 ??
-    LinkshellEventHandler1 = 0x1151, // updated 4.1 ??
+    LinkshellEventHandler = 0x016B, // updated 4.5
+    LinkshellEventHandler1 = 0x016C, // updated 4.5
 
     LandRenameHandler = 0x0175, // updated 4.5
     HousingUpdateHouseGreeting = 0x0176, // updated 4.5

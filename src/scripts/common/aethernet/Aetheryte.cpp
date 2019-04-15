@@ -108,7 +108,7 @@ public:
 
   void onTalk( uint32_t eventId, Entity::Player& player, uint64_t actorId ) override
   {
-    auto pExdData = getFramework()->get< Sapphire::Data::ExdDataGenerated >();
+    auto pExdData = framework()->get< Sapphire::Data::ExdDataGenerated >();
     if( !pExdData )
       return;
 
@@ -122,3 +122,5 @@ public:
       aethernet( eventId, player, actorId );
   }
 };
+
+EXPOSE_SCRIPT( Aetheryte );

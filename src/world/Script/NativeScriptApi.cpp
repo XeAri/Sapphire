@@ -37,7 +37,7 @@ namespace Sapphire::ScriptAPI
     m_framework = fw;
   }
 
-  Sapphire::Framework* ScriptObject::getFramework() const
+  Sapphire::Framework* ScriptObject::framework() const
   {
     return m_framework;
   }
@@ -88,22 +88,22 @@ namespace Sapphire::ScriptAPI
   {
   }
 
-  void ActionScript::onStart( Entity::Chara& sourceActor, Entity::Chara& targetActor )
+  void ActionScript::onStart( Sapphire::Action::Action& action )
   {
   }
 
-  void ActionScript::onCastFinish( Entity::Player& player, Entity::Chara& targetActor )
+  void ActionScript::onExecute( Sapphire::Action::Action& action )
   {
   }
 
-  void ActionScript::onInterrupt( Entity::Chara& sourceActor/*, Sapphire::Entity::Chara targetActor*/ )
+  void ActionScript::onInterrupt( Sapphire::Action::Action& action )
   {
   }
 
   ///////////////////////////////////////////////////////////////////
 
-  EventScript::EventScript( uint32_t questId ) :
-    ScriptObject( questId, typeid( EventScript ).hash_code() )
+  EventScript::EventScript( uint32_t eventId ) :
+    ScriptObject( eventId, typeid( EventScript ).hash_code() )
   {
   }
 
@@ -131,13 +131,17 @@ namespace Sapphire::ScriptAPI
   {
   }
 
-  void
-    EventScript::onEventItem( Entity::Player& player, uint32_t eventItemId, uint32_t eventId, uint32_t castTime, uint64_t targetId )
+  void EventScript::onEventItem( Entity::Player& player, uint32_t eventItemId, uint32_t eventId, uint32_t castTime,
+                                 uint64_t targetId )
   {
   }
 
   void EventScript::onEventHandlerTradeReturn( Entity::Player& player, uint32_t eventId, uint16_t subEvent, uint16_t param,
                                               uint32_t catalogId )
+  {
+  }
+
+  void EventScript::onEObjHit( Sapphire::Entity::Player& player, uint64_t actorId, uint32_t actionId )
   {
   }
 
@@ -177,16 +181,45 @@ namespace Sapphire::ScriptAPI
   {
   }
 
-  void InstanceContentScript::onInit( InstanceContentPtr instance )
+  void InstanceContentScript::onInit( InstanceContent& instance )
   {
   }
 
-  void InstanceContentScript::onUpdate( InstanceContentPtr instance, uint32_t currTime )
+  void InstanceContentScript::onUpdate( InstanceContent& instance, uint64_t tickCount )
   {
   }
 
-  void InstanceContentScript::onEnterTerritory( InstanceContentPtr instance, Entity::Player& player, uint32_t eventId,
+  void InstanceContentScript::onEnterTerritory( InstanceContent& instance, Entity::Player& player, uint32_t eventId,
                                                 uint16_t param1, uint16_t param2 )
+  {
+  }
+
+  ///////////////////////////////////////////////////////////////////
+
+  QuestBattleScript::QuestBattleScript( uint32_t questBattleId ) :
+    ScriptObject( uint32_t{ 0x8006 } << 16 | questBattleId, typeid( QuestBattleScript ).hash_code() )
+  {
+  }
+
+  void QuestBattleScript::onDutyComplete( Sapphire::QuestBattle& instance, Entity::Player& player )
+  {
+
+  }
+
+  void QuestBattleScript::onPlayerSetup( Sapphire::QuestBattle& instance, Entity::Player& player )
+  {
+  }
+
+  void QuestBattleScript::onInit( QuestBattle& instance )
+  {
+  }
+
+  void QuestBattleScript::onUpdate( QuestBattle& instance, uint64_t tickCount )
+  {
+  }
+
+  void QuestBattleScript::onEnterTerritory( QuestBattle& instance, Entity::Player& player, uint32_t eventId,
+                                            uint16_t param1, uint16_t param2 )
   {
   }
 

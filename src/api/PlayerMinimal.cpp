@@ -181,12 +181,13 @@ void PlayerMinimal::saveAsNew()
   std::vector< uint8_t > howTo( 33 );
   std::vector< uint8_t > aetherytes( 16 );
   std::vector< uint8_t > discovery( 421 );
-  std::vector< uint8_t > questComplete( 396 );
+  std::vector< uint8_t > questComplete( 476 );
   std::vector< uint8_t > unlocks( 64 );
   std::vector< uint8_t > mountGuide( 15 );
   std::vector< uint8_t > orchestrion( 40 );
   std::vector< uint8_t > modelEquip( 40 );
   std::vector< uint8_t > questTracking8( 10 );
+  std::vector< uint8_t > monsterNote( 41 );
   std::vector< int16_t > questTracking = { -1, -1, -1, -1, -1 };
 
   memset( questComplete.data(), 0, questComplete.size() );
@@ -205,6 +206,7 @@ void PlayerMinimal::saveAsNew()
   uint32_t startZone;
   float x, y, z, o;
   int32_t startTown = 0;
+  int32_t homePoint = 0;
 
   switch( static_cast< Sapphire::Common::ClassJob >( m_class ) )
   {
@@ -217,6 +219,7 @@ void PlayerMinimal::saveAsNew()
       o = -2.1f;
       startZone = 183;
       startTown = 2;
+      homePoint = 2;
       break;
 
     case Sapphire::Common::ClassJob::Marauder:
@@ -227,6 +230,7 @@ void PlayerMinimal::saveAsNew()
       o = 1.5f;
       startTown = 1;
       startZone = 181;
+      homePoint = 8;
       break;
 
     case Sapphire::Common::ClassJob::Thaumaturge:
@@ -238,6 +242,7 @@ void PlayerMinimal::saveAsNew()
       o = -0.3f;
       startTown = 3;
       startZone = 182;
+      homePoint = 9;
       break;
 
     default:
@@ -273,7 +278,7 @@ void PlayerMinimal::saveAsNew()
   stmt->setInt( 20, m_class );
   stmt->setInt( 21, 1 );
   stmt->setInt( 22, m_class );
-  stmt->setInt( 23, 2 );
+  stmt->setInt( 23, homePoint );
   stmt->setInt( 24, startTown );
   stmt->setBinary( 25, discovery );
   stmt->setBinary( 26, howTo );
@@ -323,6 +328,12 @@ void PlayerMinimal::saveAsNew()
 
   createInvDbContainer( InventoryType::Currency );
   createInvDbContainer( InventoryType::Crystal );
+
+  auto stmtMonsterNote = g_charaDb.getPreparedStatement( Db::ZoneDbStatements::CHARA_MONSTERNOTE_INS );
+  stmtMonsterNote->setInt( 1, m_id );
+  for( uint8_t i = 1; i <= 12; ++i )
+    stmtMonsterNote->setBinary( i + 1, monsterNote );
+  g_charaDb.directExecute( stmtMonsterNote );
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /// SETUP EQUIPMENT / STARTING GEAR

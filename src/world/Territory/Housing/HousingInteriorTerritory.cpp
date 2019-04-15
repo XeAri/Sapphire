@@ -4,7 +4,7 @@
 #include <Util/UtilMath.h>
 #include <Database/DatabaseDef.h>
 #include <Exd/ExdDataGenerated.h>
-#include <Network/GamePacketNew.h>
+#include <Network/GamePacket.h>
 #include <Network/PacketDef/Zone/ServerZoneDef.h>
 #include <Network/PacketWrappers/ActorControlPacket143.h>
 #include <Network/CommonActorControl.h>
@@ -39,7 +39,6 @@ Sapphire::World::Territory::Housing::HousingInteriorTerritory::HousingInteriorTe
   Zone( territoryTypeId, guId, internalName, contentName, pFw ),
   m_landIdent( ident )
 {
-  m_lastActivityTime = Util::getTimeSeconds();
 }
 
 Housing::HousingInteriorTerritory::~HousingInteriorTerritory() = default;
@@ -103,15 +102,9 @@ void Sapphire::World::Territory::Housing::HousingInteriorTerritory::onPlayerZone
     player.queuePacket( Server::makeActorControl143( player.getId(), Network::ActorControl::HideAdditionalChambersDoor ) );
 }
 
-void Sapphire::World::Territory::Housing::HousingInteriorTerritory::onUpdate( uint32_t currTime )
+void Sapphire::World::Territory::Housing::HousingInteriorTerritory::onUpdate( uint64_t tickCount )
 {
-  if( m_playerMap.size() > 0 )
-    m_lastActivityTime = currTime;
-}
 
-uint32_t Sapphire::World::Territory::Housing::HousingInteriorTerritory::getLastActivityTime() const
-{
-  return m_lastActivityTime;
 }
 
 const Common::LandIdent Sapphire::World::Territory::Housing::HousingInteriorTerritory::getLandIdent() const

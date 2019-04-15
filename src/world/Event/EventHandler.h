@@ -73,14 +73,14 @@ namespace Sapphire::Event
       HousingAethernet = 0x001E,
       FcTalk = 0x001F,
       ICDirector = 0x8003,
+      QuestBattleDirector = 0x8006,
     };
 
     using SceneReturnCallback = std::function< void( Entity::Player&, const SceneResult& ) >;
     using SceneChainCallback = std::function< void( Entity::Player& ) >;
     using EventFinishCallback = std::function< void( Entity::Player&, uint64_t ) >;
 
-    EventHandler( Entity::Player* pOwner, uint64_t actorId, uint32_t eventId, EventType eventType,
-                  uint32_t eventParam );
+    EventHandler( uint64_t actorId, uint32_t eventId, EventType eventType, uint32_t eventParam );
 
     ~EventHandler()
     {
@@ -118,10 +118,7 @@ namespace Sapphire::Event
 
     void removeNestedEvent();
 
-
   protected:
-    Entity::Player* m_pOwner;
-
     uint64_t m_actorId;
     uint32_t m_eventId;
     uint16_t m_entryId;

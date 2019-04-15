@@ -23,7 +23,6 @@
 #include "Navi/NaviProvider.h"
 
 #include "StatusEffect/StatusEffect.h"
-#include "Action/ActionCollision.h"
 #include "ServerMgr.h"
 #include "Session.h"
 #include "Math/CalcBattle.h"
@@ -393,12 +392,15 @@ void Sapphire::Entity::BNpc::aggro( Sapphire::Entity::CharaPtr pChara )
   setStance( Stance::Active );
   m_state = BNpcState::Combat;
 
+  sendToInRangeSet( makeActorControl142( getId(), ActorControlType::ToggleWeapon, 1, 1, 0 ) );
+
   if( pChara->isPlayer() )
   {
     PlayerPtr tmpPlayer = pChara->getAsPlayer();
-    tmpPlayer->queuePacket( makeActorControl142( getId(), ActorControlType::ToggleWeapon, 1, 1, 1 ) );
+    sendToInRangeSet( makeActorControl142( getId(), ActorControlType::ToggleAggro, 1, 0, 0 ) );
     tmpPlayer->onMobAggro( getAsBNpc() );
   }
+
 }
 
 void Sapphire::Entity::BNpc::deaggro( Sapphire::Entity::CharaPtr pChara )
@@ -422,7 +424,7 @@ void Sapphire::Entity::BNpc::onTick()
   }
 }
 
-void Sapphire::Entity::BNpc::update( int64_t currTime )
+void Sapphire::Entity::BNpc::update( uint64_t tickCount )
 {
   const uint8_t minActorDistance = 4;
   const uint8_t maxDistanceToOrigin = 40;
@@ -451,6 +453,7 @@ void Sapphire::Entity::BNpc::update( int64_t currTime )
         setHp( getMaxHp() );
 
         m_state = BNpcState::Idle;
+        setOwner( nullptr );
       }
     }
     break;
@@ -516,7 +519,7 @@ void Sapphire::Entity::BNpc::update( int64_t currTime )
           hateListClear();
           changeTarget( INVALID_GAME_OBJECT_ID64 );
           setStance( Stance::Passive );
-          //setOwner( nullptr );
+          setOwner( nullptr );
           m_state = BNpcState::Retreat;
           break;
         }
@@ -546,7 +549,7 @@ void Sapphire::Entity::BNpc::update( int64_t currTime )
   }
 
 
-  Chara::update( currTime );
+  Chara::update( tickCount );
 }
 
 void Sapphire::Entity::BNpc::regainHp()
@@ -569,8 +572,8 @@ void Sapphire::Entity::BNpc::onActionHostile( Sapphire::Entity::CharaPtr pSource
   if( !hateListGetHighest() )
     aggro( pSource );
 
-  //if( !getClaimer() )
-  //  setOwner( pSource->getAsPlayer() );
+  if( !m_pOwner )
+    setOwner( pSource );
 }
 
 void Sapphire::Entity::BNpc::onDeath()
@@ -579,6 +582,7 @@ void Sapphire::Entity::BNpc::onDeath()
   m_currentStance = Stance::Passive;
   m_state = BNpcState::Dead;
   m_timeOfDeath = Util::getTimeSeconds();
+  setOwner( nullptr );
 
   for( auto& pHateEntry : m_hateList )
   {
@@ -665,5 +669,24 @@ void Sapphire::Entity::BNpc::pushNearbyBNpcs()
 //    setPos( m_pos.x + ( xBase * -pushDistance ),
 //            m_pos.y,
 //            m_pos.z + ( zBase * -pushDistance ) );
+  }
+}
+
+void Sapphire::Entity::BNpc::setOwner( Sapphire::Entity::CharaPtr m_pChara )
+{
+  m_pOwner = m_pChara;
+  if( m_pChara != nullptr )
+  {
+    auto setOwnerPacket = makeZonePacket< FFXIVIpcActorOwner >( m_pChara->getId() );
+    setOwnerPacket->data().type = 0x01;
+    setOwnerPacket->data().actorId = m_pChara->getId();
+    sendToInRangeSet( setOwnerPacket );
+  }
+  else
+  {
+    auto setOwnerPacket = makeZonePacket< FFXIVIpcActorOwner >( getId() );
+    setOwnerPacket->data().type = 0x01;
+    setOwnerPacket->data().actorId = 0;
+    sendToInRangeSet( setOwnerPacket );
   }
 }

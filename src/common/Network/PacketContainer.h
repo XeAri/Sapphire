@@ -5,14 +5,13 @@
 
 #include "Common.h"
 #include "CommonNetwork.h"
-#include "GamePacketNew.h"
+#include "GamePacket.h"
 #include "Forwards.h"
 
 namespace Sapphire::Network::Packets
 {
 
   using FFXIVPacketBasePtr = std::shared_ptr< FFXIVPacketBase >;
-
   class PacketContainer
   {
   public:

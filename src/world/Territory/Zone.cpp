@@ -6,7 +6,7 @@
 #include <Logging/Logger.h>
 #include <Util/Util.h>
 #include <Util/UtilMath.h>
-#include <Network/GamePacketNew.h>
+#include <Network/GamePacket.h>
 #include <Exd/ExdDataGenerated.h>
 #include <Network/CommonNetwork.h>
 #include <Network/PacketDef/Zone/ServerZoneDef.h>
@@ -17,6 +17,7 @@
 
 #include "Zone.h"
 #include "InstanceContent.h"
+#include "QuestBattle.h"
 #include "Manager/TerritoryMgr.h"
 
 #include "Session.h"
@@ -67,7 +68,9 @@ Sapphire::Zone::Zone( uint16_t territoryTypeId, uint32_t guId,
   m_currentWeather( Weather::FairSkies ),
   m_nextEObjId( 0x400D0000 ),
   m_nextActorId( 0x500D0000 ),
-  m_pFw( pFw )
+  m_pFw( pFw ),
+  m_lastUpdate( 0 ),
+  m_lastActivityTime( Util::getTimeMs() )
 {
   auto pExdData = m_pFw->get< Data::ExdDataGenerated >();
   m_guId = guId;
@@ -232,9 +235,6 @@ void Sapphire::Zone::pushActor( Entity::ActorPtr pActor )
     auto pPlayer = pActor->getAsPlayer();
 
     auto pServerZone = m_pFw->get< World::ServerMgr >();
-    auto pSession = pServerZone->getSession( pPlayer->getId() );
-    if( pSession )
-      m_sessionSet.insert( pSession );
     m_playerMap[ pPlayer->getId() ] = pPlayer;
     updateCellActivity( cx, cy, 2 );
   }
@@ -257,7 +257,7 @@ void Sapphire::Zone::removeActor( Entity::ActorPtr pActor )
 
   Cell* pCell = getCellPtr( cx, cy );
   if( pCell && pCell->hasActor( pActor ) )
-    pCell->removeActor( pActor );
+    pCell->removeActorFromCell( pActor );
 
   if( pActor->isPlayer() )
   {
@@ -385,13 +385,13 @@ bool Sapphire::Zone::checkWeather()
   return false;
 }
 
-void Sapphire::Zone::updateBNpcs( int64_t tickCount )
+void Sapphire::Zone::updateBNpcs( uint64_t tickCount )
 {
   if( ( tickCount - m_lastMobUpdate ) <= 250 )
     return;
 
   m_lastMobUpdate = tickCount;
-  uint32_t currTime = Sapphire::Util::getTimeSeconds();
+  uint64_t currTime = Sapphire::Util::getTimeSeconds();
 
   for( const auto& entry : m_bNpcMap )
   {
@@ -440,60 +440,65 @@ void Sapphire::Zone::updateBNpcs( int64_t tickCount )
 
 }
 
-
-bool Sapphire::Zone::update( uint32_t currTime )
+uint64_t Sapphire::Zone::getLastActivityTime() const
 {
-  int64_t tickCount = Util::getTimeMs();
+  return m_lastActivityTime;
+}
 
+bool Sapphire::Zone::update( uint64_t tickCount )
+{
   //TODO: this should be moved to a updateWeather call and pulled out of updateSessions
   bool changedWeather = checkWeather();
 
-  updateSessions( changedWeather );
+  updateSessions( tickCount, changedWeather );
   updateBNpcs( tickCount );
-  onUpdate( currTime );
+  onUpdate( tickCount );
 
   updateSpawnPoints();
+
+  if( m_playerMap.size() > 0 )
+    m_lastActivityTime = tickCount;
+
   return true;
 }
 
-void Sapphire::Zone::updateSessions( bool changedWeather )
+void Sapphire::Zone::updateSessions( uint64_t tickCount, bool changedWeather )
 {
-  auto it = m_sessionSet.begin();
-
   // update sessions in this zone
-  for( ; it != m_sessionSet.end(); )
+  for( auto it = m_playerMap.begin(); it != m_playerMap.end(); ++it )
   {
 
-    auto pSession = ( *it );
+    auto pPlayer = it->second;
 
-    if( !pSession )
+    if( !pPlayer )
     {
-      it = m_sessionSet.erase( it );
-      continue;
+      m_playerMap.erase( it );
+      return;
     }
-
-    auto pPlayer = pSession->getPlayer();
 
     // this session is not linked to this area anymore, remove it from zone session list
     if( ( !pPlayer->getCurrentZone() ) || ( pPlayer->getCurrentZone() != shared_from_this() ) )
     {
-      removeActor( pSession->getPlayer() );
-
-      it = m_sessionSet.erase( it );
-      continue;
+      removeActor( pPlayer );
+      return;
     }
+
+    m_lastUpdate = tickCount;
 
     if( changedWeather )
     {
       auto weatherChangePacket = makeZonePacket< FFXIVIpcWeatherChange >( pPlayer->getId() );
       weatherChangePacket->data().weatherId = static_cast< uint8_t >( m_currentWeather );
       weatherChangePacket->data().delay = 5.0f;
-      pSession->getPlayer()->queuePacket( weatherChangePacket );
+      pPlayer->queuePacket( weatherChangePacket );
     }
 
     // perform session duties
-    pSession->update();
-    ++it;
+    pPlayer->getSession()->update();
+
+    // this session is not linked to this area anymore, remove it from zone session list
+    if( ( !pPlayer->getCurrentZone() ) || ( pPlayer->getCurrentZone() != shared_from_this() ) )
+      return;
   }
 }
 
@@ -600,7 +605,7 @@ void Sapphire::Zone::updateActorPosition( Entity::Actor& actor )
 
     if( pOldCell )
     {
-      pOldCell->removeActor( actor.shared_from_this() );
+      pOldCell->removeActorFromCell( actor.shared_from_this() );
     }
 
     pCell->addActor( actor.shared_from_this() );
@@ -701,7 +706,7 @@ void Sapphire::Zone::onLeaveTerritory( Entity::Player& player )
   Logger::debug( "Zone::onLeaveTerritory: Zone#{0}|{1}, Entity#{2}", getGuId(), getTerritoryTypeId(), player.getId() );
 }
 
-void Sapphire::Zone::onUpdate( uint32_t currTime )
+void Sapphire::Zone::onUpdate( uint64_t tickCount )
 {
 
 }
@@ -747,6 +752,11 @@ Sapphire::Entity::EventObjectPtr Sapphire::Zone::getEObj( uint32_t objId )
 Sapphire::InstanceContentPtr Sapphire::Zone::getAsInstanceContent()
 {
   return std::dynamic_pointer_cast< InstanceContent, Zone >( shared_from_this() );
+}
+
+Sapphire::QuestBattlePtr Sapphire::Zone::getAsQuestBattle()
+{
+  return std::dynamic_pointer_cast< QuestBattle, Zone >( shared_from_this() );
 }
 
 uint32_t Sapphire::Zone::getNextEObjId()
@@ -862,5 +872,10 @@ void Sapphire::Zone::updateSpawnPoints()
     }
   }
 
+}
+
+uint32_t Sapphire::Zone::getNextEffectSequence()
+{
+  return m_effectCounter++;
 }
 

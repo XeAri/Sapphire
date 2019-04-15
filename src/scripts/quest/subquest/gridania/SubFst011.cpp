@@ -62,7 +62,7 @@ public:
     }
   }
 
-  void onMobKill( Entity::Player& player, uint64_t npcId )
+  void onBNpcKill( uint32_t npcId, Entity::Player& player ) override
   {
     if( npcId != Enemy0 )
       return;
@@ -107,3 +107,5 @@ private:
                       } );
   };
 };
+
+EXPOSE_SCRIPT( SubFst011 );

@@ -760,14 +760,16 @@ void Sapphire::Entity::Player::setQuestBitFlag8( uint16_t questId, uint8_t index
 {
   int8_t idx = getQuestIndex( questId );
 
+  uint8_t realIdx = 8 - index;
+
   if( idx != -1 )
   {
     std::shared_ptr< QuestActive > pNewQuest = m_activeQuests[ idx ];
 
     if( val )
-      pNewQuest->a.BitFlag8 |= ( 1 << index );
+      pNewQuest->a.BitFlag8 |= ( 1 << realIdx );
     else
-      pNewQuest->a.BitFlag8 &= ~( 1 << index );
+      pNewQuest->a.BitFlag8 &= ~( 1 << realIdx );
 
     updateQuest( questId, pNewQuest->c.sequence );
   }
@@ -777,14 +779,16 @@ void Sapphire::Entity::Player::setQuestBitFlag16( uint16_t questId, uint8_t inde
 {
   int8_t idx = getQuestIndex( questId );
 
+  uint8_t realIdx = 8 - index;
+
   if( idx != -1 )
   {
     std::shared_ptr< QuestActive > pNewQuest = m_activeQuests[ idx ];
 
     if( val )
-      pNewQuest->a.BitFlag16 |= ( 1 << index );
+      pNewQuest->a.BitFlag16 |= ( 1 << realIdx );
     else
-      pNewQuest->a.BitFlag16 &= ~( 1 << index );
+      pNewQuest->a.BitFlag16 &= ~( 1 << realIdx );
 
     updateQuest( questId, pNewQuest->c.sequence );
   }
@@ -794,14 +798,16 @@ void Sapphire::Entity::Player::setQuestBitFlag24( uint16_t questId, uint8_t inde
 {
   int8_t idx = getQuestIndex( questId );
 
+  uint8_t realIdx = 8 - index;
+
   if( idx != -1 )
   {
     std::shared_ptr< QuestActive > pNewQuest = m_activeQuests[ idx ];
 
     if( val )
-      pNewQuest->a.BitFlag24 |= ( 1 << index );
+      pNewQuest->a.BitFlag24 |= ( 1 << realIdx );
     else
-      pNewQuest->a.BitFlag24 &= ~( 1 << index );
+      pNewQuest->a.BitFlag24 &= ~( 1 << realIdx );
 
     updateQuest( questId, pNewQuest->c.sequence );
   }
@@ -811,14 +817,16 @@ void Sapphire::Entity::Player::setQuestBitFlag32( uint16_t questId, uint8_t inde
 {
   int8_t idx = getQuestIndex( questId );
 
+  uint8_t realIdx = 8 - index;
+
   if( idx != -1 )
   {
     std::shared_ptr< QuestActive > pNewQuest = m_activeQuests[ idx ];
 
     if( val )
-      pNewQuest->a.BitFlag32 |= ( 1 << index );
+      pNewQuest->a.BitFlag32 |= ( 1 << realIdx );
     else
-      pNewQuest->a.BitFlag32 &= ~( 1 << index );
+      pNewQuest->a.BitFlag32 &= ~( 1 << realIdx );
 
     updateQuest( questId, pNewQuest->c.sequence );
   }
@@ -828,14 +836,16 @@ void Sapphire::Entity::Player::setQuestBitFlag40( uint16_t questId, uint8_t inde
 {
   int8_t idx = getQuestIndex( questId );
 
+  uint8_t realIdx = 8 - index;
+
   if( idx != -1 )
   {
     std::shared_ptr< QuestActive > pNewQuest = m_activeQuests[ idx ];
 
     if( val )
-      pNewQuest->a.BitFlag40 |= ( 1 << index );
+      pNewQuest->a.BitFlag40 |= ( 1 << realIdx );
     else
-      pNewQuest->a.BitFlag40 &= ~( 1 << index );
+      pNewQuest->a.BitFlag40 &= ~( 1 << realIdx );
 
     updateQuest( questId, pNewQuest->c.sequence );
   }
@@ -845,14 +855,16 @@ void Sapphire::Entity::Player::setQuestBitFlag48( uint16_t questId, uint8_t inde
 {
   int8_t idx = getQuestIndex( questId );
 
+  uint8_t realIdx = 8 - index;
+
   if( idx != -1 )
   {
     std::shared_ptr< QuestActive > pNewQuest = m_activeQuests[ idx ];
 
     if( val )
-      pNewQuest->a.BitFlag48 |= ( 1 << index );
+      pNewQuest->a.BitFlag48 |= ( 1 << realIdx );
     else
-      pNewQuest->a.BitFlag48 &= ~( 1 << index );
+      pNewQuest->a.BitFlag48 &= ~( 1 << realIdx );
 
     updateQuest( questId, pNewQuest->c.sequence );
   }
@@ -1041,7 +1053,6 @@ bool Sapphire::Entity::Player::giveQuestRewards( uint32_t questId, uint32_t opti
   // TODO: use the correct formula, this one is wrong
   uint32_t exp =
     ( questInfo->expFactor * paramGrowth->questExpModifier * ( 45 + 5 * questInfo->classJobLevel0 ) ) / 100;
-  exp = exp + ( questInfo->expFactor / 100 ) * 10000;
 
   exp = questInfo->expFactor;
 
@@ -1058,14 +1069,14 @@ bool Sapphire::Entity::Player::giveQuestRewards( uint32_t questId, uint32_t opti
   {
     for( uint32_t i = 0; i < questInfo->itemReward0.size(); i++ )
     {
-      addItem( questInfo->itemCountReward0.at( i ) );
+      addItem( questInfo->itemReward0.at( i ), questInfo->itemCountReward0.at( i ) );
     }
   }
 
   if( optionalItemCount > 0 )
   {
     auto itemId = questInfo->itemReward1.at( optionalChoice );
-    addItem( questInfo->itemCountReward1.at( optionalChoice ) );
+    addItem( itemId, questInfo->itemCountReward1.at( optionalChoice ) );
   }
 
   if( gilReward > 0 )

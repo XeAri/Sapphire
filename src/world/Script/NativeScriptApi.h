@@ -61,7 +61,7 @@ namespace Sapphire::ScriptAPI
     *
     * @return A pointer to Core::Framework
     */
-    virtual Sapphire::Framework* getFramework() const;
+    virtual Sapphire::Framework* framework() const;
   };
 
 
@@ -140,11 +140,11 @@ namespace Sapphire::ScriptAPI
   public:
     explicit ActionScript( uint32_t abilityId );
 
-    virtual void onStart( Sapphire::Entity::Chara& sourceActor, Sapphire::Entity::Chara& targetActor );
+    virtual void onStart( Sapphire::Action::Action& action );
 
-    virtual void onCastFinish( Sapphire::Entity::Player& player, Sapphire::Entity::Chara& targetActor );
+    virtual void onExecute( Sapphire::Action::Action& action );
 
-    virtual void onInterrupt( Sapphire::Entity::Chara& sourceActor/*, Sapphire::Entity::Chara targetActor*/ );
+    virtual void onInterrupt( Sapphire::Action::Action& action );
   };
 
   /*!
@@ -161,7 +161,7 @@ namespace Sapphire::ScriptAPI
     }
 
   public:
-    explicit EventScript( uint32_t questId );
+    explicit EventScript( uint32_t eventId );
 
     virtual void onTalk( uint32_t eventId, Sapphire::Entity::Player& player, uint64_t actorId );
 
@@ -171,15 +171,17 @@ namespace Sapphire::ScriptAPI
 
     virtual void onEnterTerritory( Sapphire::Entity::Player& player, uint32_t eventId, uint16_t param1, uint16_t param2 );
 
-    virtual void onWithinRange( Sapphire::Entity::Player& player, uint32_t eventId, uint32_t param1, float x, float y, float z );
+    virtual void onWithinRange( Sapphire::Entity::Player& player, uint32_t eventId, uint32_t param1,float x, float y, float z );
 
     virtual void onOutsideRange( Sapphire::Entity::Player& player, uint32_t eventId, uint32_t param1, float x, float y, float z );
 
-    virtual void
-      onEventItem( Sapphire::Entity::Player& player, uint32_t eventItemId, uint32_t eventId, uint32_t castTime, uint64_t targetId );
+    virtual void onEventItem( Sapphire::Entity::Player& player, uint32_t eventItemId, uint32_t eventId, uint32_t castTime,
+                              uint64_t targetId );
 
     virtual void onEventHandlerTradeReturn( Sapphire::Entity::Player& player, uint32_t eventId, uint16_t subEvent, uint16_t param,
                                             uint32_t catalogId );
+
+    virtual void onEObjHit( Sapphire::Entity::Player& player, uint64_t actorId, uint32_t actionId );
   };
 
   /*!
@@ -221,12 +223,32 @@ namespace Sapphire::ScriptAPI
   public:
     explicit InstanceContentScript( uint32_t instanceContentId );
 
-    virtual void onInit( Sapphire::InstanceContentPtr instance );
+    virtual void onInit( Sapphire::InstanceContent& instance );
 
-    virtual void onUpdate( Sapphire::InstanceContentPtr instance, uint32_t currTime );
+    virtual void onUpdate( Sapphire::InstanceContent& instance, uint64_t tickCount );
 
-    virtual void onEnterTerritory( Sapphire::InstanceContentPtr instance, Sapphire::Entity::Player& player, uint32_t eventId,
-                                  uint16_t param1, uint16_t param2 );
+    virtual void onEnterTerritory( Sapphire::InstanceContent& instance, Sapphire::Entity::Player& player, uint32_t eventId,
+                                   uint16_t param1, uint16_t param2 );
+  };
+
+  /*!
+  * @brief The base class for any scripts that implement behaviour related to instance content zones
+  */
+  class QuestBattleScript : public ScriptObject
+  {
+  public:
+    explicit QuestBattleScript( uint32_t questBattleId );
+
+    virtual void onDutyComplete( Sapphire::QuestBattle& instance, Entity::Player& player );
+
+    virtual void onPlayerSetup( Sapphire::QuestBattle& instance, Entity::Player& player );
+
+    virtual void onInit( Sapphire::QuestBattle& instance );
+
+    virtual void onUpdate( Sapphire::QuestBattle& instance, uint64_t tickCount );
+
+    virtual void onEnterTerritory( Sapphire::QuestBattle& instance, Sapphire::Entity::Player& player, uint32_t eventId,
+                                   uint16_t param1, uint16_t param2 );
   };
 
 }

@@ -32,6 +32,10 @@
 #include "Forwards.h"
 #include "SapphireAPI.h"
 
+#include <Util/CrashHandler.h>
+
+Sapphire::Common::Util::CrashHandler crashHandler;
+
 Sapphire::Db::DbWorkerPool< Sapphire::Db::ZoneDbConnection > g_charaDb;
 Sapphire::Data::ExdDataGenerated g_exdDataGen;
 Sapphire::Network::SapphireAPI g_sapphireAPI;
@@ -332,7 +336,7 @@ void createCharacter( shared_ptr< HttpServer::Response > response, shared_ptr< H
     std::string name = json["name"];
     std::string infoJson = json["infoJson"];
 
-    std::string finalJson = Sapphire::Util::base64_decode( infoJson );
+    std::string finalJson = Sapphire::Util::base64Decode( infoJson );
 
     // reloadConfig();
 

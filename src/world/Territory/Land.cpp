@@ -10,7 +10,7 @@
 #include <MySqlBase.h>
 #include <Connection.h>
 
-#include <Network/GamePacketNew.h>
+#include <Network/GamePacket.h>
 #include <Network/PacketDef/Zone/ServerZoneDef.h>
 
 #include "Actor/Player.h"
@@ -225,10 +225,11 @@ void Sapphire::Land::updateLandDb()
     house->updateHouseDb();
 }
 
-void Sapphire::Land::update( uint32_t currTime )
+void Sapphire::Land::update( uint64_t tickCount )
 {
   if( getStatus() == HouseStatus::ForSale )
   {
+    auto currTime = Util::getTimeSeconds();
     if( m_nextDrop < currTime && m_minPrice < m_currentPrice )
     {
       m_nextDrop = currTime + 21600;

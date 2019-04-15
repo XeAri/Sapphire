@@ -1,7 +1,7 @@
 #ifndef _CHATPACKET_H
 #define _CHATPACKET_H
 
-#include <Network/GamePacketNew.h>
+#include <Network/GamePacket.h>
 #include <Network/PacketDef/Zone/ServerZoneDef.h>
 #include "Forwards.h"
 
@@ -12,7 +12,7 @@ namespace Sapphire::Network::Packets::Server
   /**
   * @brief The Chat packet.
   */
-  class ChatPacket :  public ZoneChannelPacket< FFXIVIpcChat >
+  class ChatPacket : public ZoneChannelPacket< FFXIVIpcChat >
   {
   public:
     ChatPacket( Entity::Player& player, Common::ChatType chatType, const std::string& msg ) :

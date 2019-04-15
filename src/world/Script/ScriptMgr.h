@@ -70,7 +70,13 @@ namespace Sapphire::Scripting
 
     bool onBNpcKill( Entity::Player& player, uint16_t nameId );
 
-    bool onCastFinish( Entity::Player& pPlayer, Entity::CharaPtr pTarget, uint32_t actionId );
+    bool onEObjHit( Entity::Player& player, uint64_t actorId, uint32_t actionId );
+
+    bool onStart( Action::Action& action );
+
+    bool onInterrupt( Action::Action& action );
+
+    bool onExecute( Action::Action& action );
 
     bool onStatusReceive( Entity::CharaPtr pActor, uint32_t effectId );
 
@@ -88,11 +94,22 @@ namespace Sapphire::Scripting
 
     bool onInstanceInit( InstanceContentPtr instance );
 
-    bool onInstanceUpdate( InstanceContentPtr instance, uint32_t currTime );
+    bool onInstanceUpdate( InstanceContentPtr instance, uint64_t tickCount );
 
     bool
     onInstanceEnterTerritory( InstanceContentPtr instance, Entity::Player& player, uint32_t eventId, uint16_t param1,
                               uint16_t param2 );
+
+    bool onPlayerSetup( QuestBattle& instance, Entity::Player& player );
+
+    bool onInstanceInit( QuestBattlePtr instance );
+
+    bool onInstanceUpdate( QuestBattlePtr instance, uint64_t tickCount );
+
+    bool onInstanceEnterTerritory( QuestBattlePtr instance, Entity::Player& player, uint32_t eventId, uint16_t param1,
+                                   uint16_t param2 );
+
+    bool onDutyComplete( QuestBattlePtr instance, Entity::Player& player );
 
     bool loadDir( const std::string& dirname, std::set< std::string >& files, const std::string& ext );
 
