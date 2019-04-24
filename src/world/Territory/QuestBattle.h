@@ -66,6 +66,8 @@ namespace Sapphire
     void fail();
     void success();
 
+    uint32_t getCountEnemyBNpc();
+
     void clearDirector( Entity::Player& player );
 
     Event::Director::DirectorState getState() const;
@@ -78,6 +80,8 @@ namespace Sapphire
 
     /*! number of milliseconds after all players are ready for the instance to commence (spawn circle removed) */
     const uint32_t instanceStartDelay = 1250;
+
+    Entity::PlayerPtr getPlayerPtr();
 
   private:
     std::shared_ptr< Sapphire::Data::QuestBattle > m_pBattleDetails;

@@ -50,11 +50,11 @@ struct instanceContent
 };
 
 std::vector< instanceContent > contentList;
-xiv::dat::GameData* data1 = nullptr;
+xiv::dat::GameData* g_gameData = nullptr;
 
 void initExd( const std::string& gamePath )
 {
-  data1 = data1 ? data1 : new xiv::dat::GameData( gamePath );
+  g_gameData = g_gameData ? g_gameData : new xiv::dat::GameData( gamePath );
 }
 
 std::unordered_map< std::string, std::string > g_nameMap;
@@ -237,29 +237,25 @@ int main( int argc, char* argv[] )
     try
     {
       const auto& zonePath = zoneNameToPath( zoneName );
-
-      std::string listPcbPath( zonePath + "/collision/list.pcb" );
       std::string bgLgbPath( zonePath + "/level/bg.lgb" );
       std::string planmapLgbPath( zonePath + "/level/planmap.lgb" );
       std::string planeventLgbPath( zonePath + "/level/planevent.lgb" );
-      std::string collisionFilePath( zonePath + "/collision/" );
       std::string plannerFilePath( zonePath + "/level/planner.lgb" );
-      std::string lcbFilePath( zonePath + "/level/" + zoneName + ".lcb" );
-      std::string svbFilePath( zonePath + "/level/" + zoneName + ".svb" );
-      std::vector< char > section;
-      std::vector< char > section2;
-      std::vector< char > section3;
 
-      const xiv::dat::Cat& test = data1->getCategory( "bg" );
+      auto bgFile = g_gameData->getFile( bgLgbPath );
+      auto planmapFile = g_gameData->getFile( planmapLgbPath );
+      auto planeventFile = g_gameData->getFile( planeventLgbPath );
+      auto plannerFile = g_gameData->getFile( plannerFilePath );
+      
+      auto bgData = bgFile->access_data_sections().at( 0 );
+      auto planmapData = planmapFile->access_data_sections().at( 0 );
+      auto planeventData = planeventFile->access_data_sections().at( 0 );
+      auto plannerData = plannerFile->access_data_sections().at( 0 );
 
-      auto test_file = data1->getFile( bgLgbPath );
-      auto planmap_file = data1->getFile( planmapLgbPath );
-      section = test_file->access_data_sections().at( 0 );
-      section2 = planmap_file->access_data_sections().at( 0 );
-
-      LGB_FILE bgLgb( &section[ 0 ], "bg" );
-      LGB_FILE planmapLgb( &section2[ 0 ], "planmap" );
-      LGB_FILE planeventLgb( &section3[ 0 ], "planevent" );
+      LGB_FILE bgLgb( &bgData[ 0 ], "bg" );
+      LGB_FILE planmapLgb( &planmapData[ 0 ], "planmap" );
+      LGB_FILE planeventLgb( &planeventData[ 0 ], "planevent" );
+      LGB_FILE planerLgb( &plannerData[ 0 ], "planner" );
 
       std::vector< LGB_FILE > lgbList{ bgLgb, planmapLgb };
 
@@ -304,7 +300,7 @@ int main( int argc, char* argv[] )
                   auto pGObjR = reinterpret_cast< LGB_GIMMICK_ENTRY* >( pGObj );
                   char* dataSection = nullptr;
 
-                  auto file = data1->getFile( pGObjR->gimmickFileName );
+                  auto file = g_gameData->getFile( pGObjR->gimmickFileName );
                   auto sections = file->get_data_sections();
                   dataSection = &sections.at( 0 )[ 0 ];
                   auto sgbFile = SGB_FILE( &dataSection[ 0 ] );
@@ -440,7 +436,7 @@ int main( int argc, char* argv[] )
   Logger::info( "Finished all tasks in {} seconds", 
             std::chrono::duration_cast< std::chrono::seconds >( std::chrono::system_clock::now() - startTime ).count() );
 
-  if( data1 )
-    delete data1;
+  if( g_gameData )
+    delete g_gameData;
   return 0;
 }

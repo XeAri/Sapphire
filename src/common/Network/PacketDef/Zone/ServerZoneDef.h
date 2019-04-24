@@ -576,7 +576,7 @@ namespace Sapphire::Network::Packets::Server
     uint32_t u15;
     uint32_t bNPCBase;
     uint32_t bNPCName;
-    uint32_t u18;
+    uint32_t levelId;
     uint32_t u19;
     uint32_t directorId;
     uint32_t spawnerId;
@@ -610,7 +610,8 @@ namespace Sapphire::Network::Packets::Server
     uint8_t mountFeet;
     uint8_t mountColor;
     uint8_t scale;
-    uint32_t u29b;
+    uint16_t elementalLevel; // Eureka
+    uint16_t element; // Eureka
     uint32_t u30b;
     Common::StatusEffect effect[30];
     Common::FFXIVARR_POSITION3 pos;
@@ -1039,7 +1040,9 @@ namespace Sapphire::Network::Packets::Server
     char padding1[8];
     uint64_t mainWeaponModel;
     uint64_t secWeaponModel;
-    char unknown2[16];
+    uint8_t unknown2;
+    uint16_t worldId;
+    char unknown3[12];
     struct ItemData
     {
       uint32_t catalogId;
@@ -1545,6 +1548,22 @@ namespace Sapphire::Network::Packets::Server
     uint16_t u22;
     uint16_t u24;
     uint16_t u28;
+  };
+
+  struct FFXIVIpcDirectorPopUp : FFXIVIpcBasePacket< DirectorPopUp >
+  {
+    uint32_t directorId;
+    uint16_t pad1[2];
+    uint64_t sourceActorId;
+    /*!
+     * 2 = green text in log
+     */
+    uint8_t flags;
+    uint8_t pad2[3];
+    uint32_t bNPCName;
+    uint32_t textId;
+    uint32_t popupTimeMs;
+    uint32_t pad3[4];
   };
 
 

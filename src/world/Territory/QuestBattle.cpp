@@ -12,6 +12,8 @@
 
 #include "Actor/Player.h"
 #include "Actor/EventObject.h"
+#include "Actor/BNpc.h"
+#include "Actor/BNpcTemplate.h"
 
 #include "Network/PacketWrappers/ActorControlPacket142.h"
 #include "Network/PacketWrappers/ActorControlPacket143.h"
@@ -46,6 +48,9 @@ Sapphire::QuestBattle::QuestBattle( std::shared_ptr< Sapphire::Data::QuestBattle
 
 bool Sapphire::QuestBattle::init()
 {
+  if( !Zone::init() )
+    return false;
+
   auto pScriptMgr = m_pFw->get< Scripting::ScriptMgr >();
   pScriptMgr->onInstanceInit( getAsQuestBattle() );
 
@@ -117,6 +122,8 @@ void Sapphire::QuestBattle::onUpdate( uint64_t tickCount )
         return;
 
       onEnterSceneFinish( *m_pPlayer );
+      auto pScriptMgr = m_pFw->get< Scripting::ScriptMgr >();
+      pScriptMgr->onDutyCommence( *this, *m_pPlayer );
 
       m_state = DutyInProgress;
       m_instanceExpireTime = Util::getTimeSeconds() + ( m_pBattleDetails->timeLimit * 60u );
@@ -127,6 +134,7 @@ void Sapphire::QuestBattle::onUpdate( uint64_t tickCount )
       break;
 
     case DutyInProgress:
+      updateBNpcs( tickCount );
       break;
 
     case DutyFinished:
@@ -151,6 +159,8 @@ void Sapphire::QuestBattle::onUpdate( uint64_t tickCount )
 
   auto pScriptMgr = m_pFw->get< Scripting::ScriptMgr >();
   pScriptMgr->onInstanceUpdate( getAsQuestBattle(), tickCount );
+
+  m_lastUpdate = tickCount;
 }
 
 void Sapphire::QuestBattle::onFinishLoading( Entity::Player& player )
@@ -343,7 +353,7 @@ void Sapphire::QuestBattle::clearDirector( Entity::Player& player )
 
 void Sapphire::QuestBattle::success()
 {
-
+  //m_state = DutyFinished;
   m_pPlayer->eventStart( m_pPlayer->getId(), getDirectorId(), Event::EventHandler::GameProgress, 1, 0 );
   m_pPlayer->playScene( getDirectorId(), 60001, 0x40000,
     [ & ]( Entity::Player& player, const Event::SceneResult& result )
@@ -370,4 +380,20 @@ void Sapphire::QuestBattle::fail()
 uint32_t Sapphire::QuestBattle::getQuestId() const
 {
   return m_pBattleDetails->quest;
+}
+
+uint32_t Sapphire::QuestBattle::getCountEnemyBNpc()
+{
+  uint32_t count = 0;
+  for( auto bnpcIt : m_bNpcMap )
+  {
+    if( bnpcIt.second->getEnemyType() == 4 && bnpcIt.second->isAlive() )
+      count++;
+  }
+  return count;
+}
+
+Sapphire::Entity::PlayerPtr Sapphire::QuestBattle::getPlayerPtr()
+{
+  return m_pPlayer;
 }

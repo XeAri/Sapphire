@@ -37,7 +37,9 @@ Sapphire::Entity::Chara::Chara( ObjKind type, FrameworkPtr pFw ) :
   Actor( type ),
   m_pose( 0 ),
   m_targetId( INVALID_GAME_OBJECT_ID64 ),
-  m_pFw( std::move( std::move( pFw ) ) )
+  m_pFw( std::move( std::move( pFw ) ) ),
+  m_directorId( 0 ),
+  m_radius( 1.f )
 {
 
   m_lastTickTime = 0;
@@ -78,6 +80,11 @@ Sapphire::Entity::Chara::ActorStats Sapphire::Entity::Chara::getStats() const
 uint32_t Sapphire::Entity::Chara::getHp() const
 {
   return m_hp;
+}
+
+uint32_t Sapphire::Entity::Chara::getHpPercent() const
+{
+  return ( m_hp * 100 ) / m_maxHp;
 }
 
 /*! \return current MP */
@@ -685,4 +692,30 @@ uint32_t Sapphire::Entity::Chara::getLastComboActionId() const
   }
 
   return m_lastComboActionId;
+}
+
+uint32_t Sapphire::Entity::Chara::getDirectorId() const
+{
+  return m_directorId;
+}
+
+void Sapphire::Entity::Chara::setDirectorId( uint32_t directorId )
+{
+  m_directorId = directorId;
+}
+
+uint32_t Sapphire::Entity::Chara::getAgentId() const
+{
+  return m_agentId;
+}
+
+void Sapphire::Entity::Chara::setAgentId( uint32_t agentId )
+{
+  m_agentId = agentId;
+}
+
+
+float Sapphire::Entity::Chara::getRadius() const
+{
+  return m_radius;
 }

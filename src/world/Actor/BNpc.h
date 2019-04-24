@@ -29,6 +29,17 @@ namespace Sapphire::Entity
     Dead,
   };
 
+  enum BNpcFlag
+  {
+    None = 0,
+    Immobile = 1,
+    TurningDisabled = 2,
+    Invincible = 4,
+    InvincibleRefill = 8,
+    NoDeaggro = 16,
+    Untargetable = 32,
+  };
+
   /*!
   \class BNpc
   \brief Base class for all BNpcs
@@ -60,14 +71,13 @@ namespace Sapphire::Entity
 
     uint8_t getAggressionMode() const;
 
-    float getScale() const;
+
     float getNaviTargetReachedDistance() const;
 
     // return true if it reached the position
     bool moveTo( const Common::FFXIVARR_POSITION3& pos );
 
-    // processes movement
-    void step();
+    bool moveTo( const Entity::Chara& targetChara );
 
     void sendPositionUpdate();
 
@@ -91,6 +101,8 @@ namespace Sapphire::Entity
 
     void onDeath() override;
 
+    void autoAttack( CharaPtr pTarget ) override;
+
     uint32_t getTimeOfDeath() const;
     void setTimeOfDeath( uint32_t timeOfDeath );
 
@@ -98,9 +110,13 @@ namespace Sapphire::Entity
 
     void checkAggro();
 
-    void pushNearbyBNpcs();
-
     void setOwner( CharaPtr m_pChara );
+
+    void setLevelId( uint32_t levelId );
+    uint32_t getLevelId() const;
+
+    bool hasFlag( uint32_t flag ) const;
+    void setFlag( uint32_t flags );
 
   private:
     uint32_t m_bNpcBaseId;
@@ -114,8 +130,10 @@ namespace Sapphire::Entity
     uint16_t m_modelChara;
     uint32_t m_displayFlags;
     uint8_t m_level;
+    uint32_t m_levelId;
 
-    float m_scale;
+    uint32_t m_flags;
+
     float m_naviTargetReachedDistance;
 
     uint32_t m_timeOfDeath;

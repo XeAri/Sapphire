@@ -103,6 +103,8 @@ namespace Sapphire::Entity
     uint64_t m_targetId;
     /*! Ptr to a queued action */
     Action::ActionPtr m_pCurrentAction;
+    /*! id of the director this chara is assigned to */
+    uint32_t m_directorId;
 
     /*!
      * @brief the id of the last combo action used (IgnoresCombo)
@@ -125,6 +127,12 @@ namespace Sapphire::Entity
     std::vector< std::pair< uint8_t, uint32_t > > m_statusEffectList;
     std::map< uint8_t, StatusEffect::StatusEffectPtr > m_statusEffectMap;
     FrameworkPtr m_pFw;
+
+    /*! Detour Crowd AgentId */
+    uint32_t m_agentId;
+
+    /*! Detour Crowd actor scale */
+    float m_radius;
 
   public:
     Chara( Common::ObjKind type, FrameworkPtr pFw );
@@ -184,6 +192,8 @@ namespace Sapphire::Entity
     ActorStats getStats() const;
 
     uint32_t getHp() const;
+
+    uint32_t getHpPercent() const;
 
     uint32_t getMp() const;
 
@@ -261,6 +271,14 @@ namespace Sapphire::Entity
     void setLastComboActionId( uint32_t actionId );
 
     uint32_t getBonusStat( Common::BaseParam bonus ) const;
+
+    uint32_t getDirectorId() const;
+    void setDirectorId( uint32_t directorId );
+
+    uint32_t getAgentId() const;
+    void setAgentId( uint32_t agentId );
+
+    float getRadius() const;
 
   };
 
