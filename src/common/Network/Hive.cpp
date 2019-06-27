@@ -2,44 +2,43 @@
 #include <functional>
 #include "Hive.h"
 
-namespace Core {
-namespace Network {
+using namespace Sapphire;
 
 //-----------------------------------------------------------------------------
 
-Hive::Hive() :
+Network::Hive::Hive() :
   m_work_ptr( new asio::io_service::work( m_io_service ) ),
   m_shutdown( 0 )
 {
 }
 
-Hive::~Hive()
+Network::Hive::~Hive()
 {
 }
 
-asio::io_service& Hive::GetService()
+asio::io_service& Network::Hive::getService()
 {
   return m_io_service;
 }
 
-bool Hive::HasStopped()
+bool Network::Hive::hasStopped()
 {
   uint32_t v1 = 1;
   uint32_t v2 = 1;
   return m_shutdown.compare_exchange_strong( v1, v2 );
 }
 
-void Hive::Poll()
+void Network::Hive::poll()
 {
   m_io_service.poll();
 }
 
-void Hive::Run()
+void Network::Hive::run()
 {
   m_io_service.run();
 }
 
-void Hive::Stop()
+void Network::Hive::stop()
 {
   uint32_t v1 = 1;
   uint32_t v2 = 0;
@@ -51,7 +50,7 @@ void Hive::Stop()
   }
 }
 
-void Hive::Reset()
+void Network::Hive::reset()
 {
   uint32_t v1 = 0;
   uint32_t v2 = 1;
@@ -60,7 +59,4 @@ void Hive::Reset()
     m_io_service.reset();
     m_work_ptr.reset( new asio::io_service::work( m_io_service ) );
   }
-}
-
-}
 }

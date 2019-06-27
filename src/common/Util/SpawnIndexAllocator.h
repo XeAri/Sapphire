@@ -5,11 +5,10 @@
 #include <unordered_map>
 #include <type_traits>
 
-namespace Core::Util
+namespace Sapphire::Common::Util
 {
 
   template< typename T, typename ActorIdType = uint32_t >
-
   class SpawnIndexAllocator
   {
   public:
@@ -37,7 +36,7 @@ namespace Core::Util
     {
       auto it = m_actorIdToAllocatedMap.find( actorId );
       if( it == m_actorIdToAllocatedMap.end() )
-        return 0;
+        return getAllocFailId();
 
       auto index = it->second;
       m_availableIds.push( index );

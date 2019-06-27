@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 
-namespace Core::Util
+namespace Sapphire::Common::Util
 {
 
   std::string binaryToHexString( uint8_t* pBinData, uint16_t size );
@@ -19,15 +19,22 @@ namespace Core::Util
 
   std::string toLowerCopy( const std::string& inStr );
 
+  std::string fmtUtcTime( const std::string& fmt );
+
   uint64_t getTimeMs();
 
-  int64_t getTimeSeconds();
+  /*!
+   * @brief Get a POSIX epoch representation of the current time
+   * @return 32-bit unsigned integer
+   */
+
+  uint32_t getTimeSeconds();
 
   uint64_t getEorzeanTimeStamp();
 
   void valueToFlagByteIndexValue( uint32_t inVal, uint8_t& outVal, uint16_t& outIndex );
 
-  template <class T>
+  template< class T >
   inline void hashCombine( std::size_t& seed, const T& v )
   {
       std::hash< T > hasher;

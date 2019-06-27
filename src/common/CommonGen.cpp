@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-namespace Core {
+namespace Sapphire {
 namespace Common {
 
 bool operator==( const ActionCategory& t, const uint8_t& g )
@@ -13,6 +13,16 @@ bool operator==( const ActionCategory& t, const uint8_t& g )
 bool operator==( const uint8_t& g, const ActionCategory& t )
 {
   return static_cast< uint8_t >( t ) == g;
+}
+
+bool operator==( const uint8_t& g, const BaseParam& t )
+{
+  return static_cast< uint8_t >( t ) == g;
+}
+
+bool operator!=( const uint8_t& g, const BaseParam& t )
+{
+  return static_cast< uint8_t >( t ) != g;
 }
 
 bool operator==( const BeastReputationRank& t, const uint8_t& g )

@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace Core
+namespace Sapphire::Common::Util
 {
 
   template< typename T >

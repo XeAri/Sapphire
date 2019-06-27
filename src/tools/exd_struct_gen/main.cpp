@@ -11,6 +11,7 @@
 #include <set>
 #include <Exd/ExdDataGenerated.h>
 #include <Logging/Logger.h>
+#include <experimental/filesystem>
 
 #include <nlohmann/json.hpp>
 
@@ -19,10 +20,11 @@
 #include <regex>
 #include <algorithm>
 
+using namespace Sapphire;
 
+namespace fs = std::experimental::filesystem;
 
-Core::Logger g_log;
-Core::Data::ExdDataGenerated g_exdData;
+Sapphire::Data::ExdDataGenerated g_exdData;
 bool skipUnmapped = true;
 
 std::map< char, std::string > numberToStringMap
@@ -39,13 +41,15 @@ std::map< char, std::string > numberToStringMap
     { '9', "nine" },
   };
 
-std::vector< std::string > cppKeyWords
+std::vector< std::string > reservedWords
   {
     "new",
-    "class"
+    "class",
+    "long",
+    "short"
   };
 
-//std::string datLocation( "/opt/sapphire_3_15_0/bin/sqpack" );
+//std::string datLocation( "/home/mordred/sqpack" );
 std::string datLocation( "C:\\SquareEnix\\FINAL FANTASY XIV - A Realm Reborn\\game\\sqpack" );
 std::map< uint8_t, std::string > g_typeMap;
 
@@ -87,7 +91,7 @@ std::string generateSetDatAccessCall( const std::string& exd )
   if( langs.size() > 1 )
     lang = "xiv::exd::Language::en";
 
-  return "      m_" + exd + "Dat = setupDatAccess( \"" + exd + "\", " + lang + " );\n";
+  return "    m_" + exd + "Dat = setupDatAccess( \"" + exd + "\", " + lang + " );\n";
 }
 
 std::string generateDirectGetterDef()
@@ -112,37 +116,63 @@ std::string generateStruct( const std::string& exd )
 
   int count = 0;
 
-  auto json = nlohmann::json();
+  auto path = fmt::format( "Definitions/{}.json", exd );
+  if( !fs::exists( path ) )
+  {
+    Logger::warn( "No definition for exd: {}", exd );
+    return "";
+  }
 
-  std::ifstream exJson( "ex.json" );
-  exJson >> json;
+  auto sheet = nlohmann::json();
+  std::ifstream defJson( path );
+  defJson >> sheet;
 
-  for( auto& definition : json["sheets"][exd] )
+  for( auto& definition : sheet[ "definitions" ] )
   {
     uint32_t index;
     std::string converterTarget = "";
     bool isRepeat = false;
     int num = 0;
-
-    index = definition["index"].get< uint32_t >();
-    indexToNameMap[ index ] = std::string( definition["name"] );
-
-    converterTarget = std::string( definition["converter"]["target"] );
-    if( nameTaken.find( converterTarget ) != nameTaken.end() )
-      indexToTarget[ index ] = converterTarget;
-
-    if( auto count = definition["count"] )
+    try
     {
-      num = std::stoi( std::string( count ) );
+      index = definition.at( "index" );
+    }
+    catch( ... )
+    {
+      index = 0;
+    }
+
+    try
+    {
+      std::string fieldName = std::string( definition.at( "name" ) );
+      indexToNameMap[ index ] = fieldName;
+    }
+    catch( ... )
+    {
+    }
+
+    try
+    {
+      converterTarget = std::string( definition.at( "converter" ).at( "target" ) );
+      if( nameTaken.find( converterTarget ) != nameTaken.end() )
+        indexToTarget[ index ] = converterTarget;
+    }
+    catch( ... )
+    {
+    }
+
+    try
+    {
+      num = definition.at( "count" );
       isRepeat = true;
       indexIsArrayMap[ index ] = true;
       indexCountMap[ index ] = num;
-
-      std::string fName = definition["definition"]["name"];
+      std::string fName = definition.at( "definition" ).at( "name" );
       indexToNameMap[ index ] = fName;
     }
-
-
+    catch( ... )
+    {
+    }
   }
 
   std::string result = "struct " + exd + "\n{\n";
@@ -175,7 +205,7 @@ std::string generateStruct( const std::string& exd )
     }
     fieldName[ 0 ] = std::tolower( fieldName[ 0 ] );
 
-    std::string badChars = ",-':![](){}<>% \x02\x1f\x01\x03";
+    std::string badChars = ",-':![](){}/<>% \x02\x1f\x01\x03";
     std::for_each( badChars.begin(), badChars.end(), [ &fieldName ]( const char c ) 
     {
       fieldName.erase( std::remove( fieldName.begin(), fieldName.end(), c ), fieldName.end() );
@@ -190,30 +220,38 @@ std::string generateStruct( const std::string& exd )
       }
     }
 
-    for( std::string keyword : cppKeyWords )
+    for( std::string keyword : reservedWords )
     {
       if( fieldName == keyword )
-        fieldName[ 0 ] = toupper( fieldName[ 0 ] );
+        fieldName = fmt::format( "_{}", fieldName );
     }
 
     indexToNameMap[ count ] = fieldName;
     indexToTypeMap[ count ] = type;
     if( indexToTarget.find( count ) != indexToTarget.end() )
-      result += "   std::shared_ptr< " + indexToTarget[ count ] + "> " + fieldName + ";\n";
+      result += "  std::shared_ptr< " + indexToTarget[ count ] + "> " + fieldName + ";\n";
     else
     {
       if( indexIsArrayMap.find( count ) != indexIsArrayMap.end() )
       {
         type = "std::vector< " + type + " >";
       }
-      result += "   " + type + " " + fieldName + ";\n";
+      result += "  " + type + " " + fieldName + ";\n";
 
     }
 
     count++;
   }
 
-  result += "\n   " + exd + "( uint32_t row_id, Core::Data::ExdDataGenerated* exdData );\n";
+  auto exhHead = exh.get_header();
+  if( exhHead.variant == 2 )
+  {
+    result += "\n  " + exd + "( uint32_t row_id, uint32_t subRow, Sapphire::Data::ExdDataGenerated* exdData );\n";
+  }
+  else
+  {
+    result += "\n  " + exd + "( uint32_t row_id, Sapphire::Data::ExdDataGenerated* exdData );\n";
+  }
   result += "};\n\n";
 
   return result;
@@ -229,11 +267,20 @@ std::string generateConstructorsDecl( const std::string& exd )
 
   int count = 0;
 
-
-  result += "\nCore::Data::" + exd + "::" + exd + "( uint32_t row_id, Core::Data::ExdDataGenerated* exdData )\n";
-  result += "{\n";
-  std::string indent = "   ";
-  result += indent + "auto row = exdData->m_" + exd + "Dat.get_row( row_id );\n";
+  std::string indent = "  ";
+  auto exhHead = exh.get_header();
+  if( exhHead.variant == 2 )
+  {
+    result += "\nSapphire::Data::" + exd + "::" + exd + "( uint32_t row_id, uint32_t subRow, Sapphire::Data::ExdDataGenerated* exdData )\n";
+    result += "{\n";
+    result += indent + "auto row = exdData->m_" + exd + "Dat.get_row( row_id, subRow );\n";
+  }
+  else
+  {
+    result += "\nSapphire::Data::" + exd + "::" + exd + "( uint32_t row_id, Sapphire::Data::ExdDataGenerated* exdData )\n";
+    result += "{\n";
+    result += indent + "auto row = exdData->m_" + exd + "Dat.get_row( row_id );\n";
+  }
   for( auto member : exhMem )
   {
     if( indexToNameMap.find( count ) == indexToNameMap.end() )
@@ -279,10 +326,10 @@ std::string generateConstructorsDecl( const std::string& exd )
 
 int main( int argc, char** argv )
 {
-  g_log.init();
+  Logger::init( "struct_gen" );
   if( argc > 1 )
   {
-    g_log.info( "using dat path: " + std::string( argv[ 1 ] ) );
+    Logger::info( "using dat path: {0}", std::string( argv[ 1 ] ) );
     datLocation = std::string( argv[ 1 ] );
   }
 
@@ -307,19 +354,14 @@ int main( int argc, char** argv )
                     std::istreambuf_iterator< char >() );
 
 
-  std::ifstream exJson( "ex.json" );
-
-  auto json = nlohmann::json();
-  exJson >> json;
-
-  g_log.info( "Setting up EXD data" );
+  Logger::info( "Setting up EXD data" );
   if( !g_exdData.init( datLocation ) )
   {
-    g_log.fatal( "Error setting up EXD data " );
+    Logger::fatal( "Error setting up EXD data " );
     return 0;
   }
-  g_log.info( "Generating structs, this may take several minutes..." );
-  g_log.info( "Go grab a coffee..." );
+  Logger::info( "Generating structs, this may take several minutes..." );
+  Logger::info( "Go grab a coffee..." );
 
   std::string structDefs;
   std::string idListsDecl;
@@ -333,13 +375,27 @@ int main( int argc, char** argv )
 
   //BOOST_FOREACH( boost::property_tree::ptree::value_type &sheet, m_propTree.get_child( "sheets" ) )
   //{
-  //std::string name = sheet.second.get< std::string >( "sheet" );
   //nameTaken[name] = "1";
   //}
+  //
 
-  for( auto& sheet : json["sheets"] )
+  if( !fs::exists( "Definitions" ) )
   {
-    std::string name = json["sheet"];
+    Logger::error( "Missing definitions directory. Copy it from SaintCoinach to the working directory." );
+    return 1;
+  }
+
+  uint32_t entryCount = 0;
+  for( auto& entry : fs::directory_iterator( "./Definitions/" ) )
+  {
+    auto& path = entry.path();
+
+    if( path.extension() != ".json" )
+      continue;
+
+    entryCount++;
+
+    auto name = path.stem().string();
 
     forwards += "struct " + name + ";\n";
     structDefs += generateStruct( name );
@@ -351,21 +407,7 @@ int main( int argc, char** argv )
     idListGetters += generateIdListGetter( name );
   }
 
-  getterDecl +=
-    "\n     template< class T >\n"
-    "     std::shared_ptr< T > get( uint32_t id )\n"
-    "     {\n"
-    "        try\n"
-    "        {\n"
-    "           auto info = std::make_shared< T >( id, this );\n"
-    "           return info;\n"
-    "        }\n"
-    "        catch( ... )\n"
-    "        {\n"
-    "           return nullptr;\n"
-    "        }\n"
-    "        return nullptr;\n"
-    "     }\n";
+  Logger::info( "Processed {} definition files, writing files...", entryCount );
 
   getterDef += generateDirectGetterDef();
 
@@ -395,6 +437,8 @@ int main( int argc, char** argv )
   outC.close();
 
 //   g_log.info( result );
+
+  Logger::info( "done." );
 
   return 0;
 }

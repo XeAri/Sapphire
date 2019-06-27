@@ -5,12 +5,13 @@
 #include <vector>
 
 #include "CommonGen.h"
+#include "Vector3.h"
 
 // +---------------------------------------------------------------------------
 // The following enumerations are structures to require their type be included.
-// They are also defined within the Core::Common namespace to avoid collisions.
+// They are also defined within the Sapphire::Common namespace to avoid collisions.
 // +---------------------------------------------------------------------------
-namespace Core::Common
+namespace Sapphire::Common
 {
 
   // 99 is the last spawn id that seems to spawn any actor
@@ -18,12 +19,26 @@ namespace Core::Common
   const uint8_t MAX_DISPLAYED_EOBJS = 40;
 
   const int32_t INVALID_GAME_OBJECT_ID = 0xE0000000;
+  const uint64_t INVALID_GAME_OBJECT_ID64 = 0xE0000000;
 
-  struct FFXIVARR_POSITION3
+  /*!
+   * @brief The maximum length (in ms) of a combo before it is canceled/voided.
+   *
+   * The client has a combo timer of about 12 seconds, with a 0.5 second grace on top for latency considerations.
+   */
+  const uint16_t MAX_COMBO_LENGTH = 12500;
+
+  struct FFXIVARR_POSITION3_U16
   {
-    float x;
-    float y;
-    float z;
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+  };
+
+  struct ActiveLand
+  {
+    uint8_t ward;
+    uint8_t plot;
   };
 
   enum InventoryOperation : uint8_t
@@ -41,6 +56,17 @@ namespace Core::Common
     English = 2,
     German = 4,
     French = 8
+  };
+
+  enum TellFlags : uint8_t
+  {
+    GmTellMsg = 0x4,
+  };
+
+  enum BNpcType : uint8_t
+  {
+    Friendly = 0,
+    Enemy = 4,
   };
 
   enum ObjKind : uint8_t
@@ -214,7 +240,54 @@ namespace Core::Common
     FreeCompanyBag1 = 20001,
     FreeCompanyBag2 = 20002,
     FreeCompanyGil = 22000,
-    FreeCompanyCrystal = 22001
+    FreeCompanyCrystal = 22001,
+
+    // housing interior containers
+    HousingInteriorAppearance = 25002,
+
+    // 50 in each container max, 400 slots max
+    HousingInteriorPlacedItems1 = 25003,
+    HousingInteriorPlacedItems2 = 25004,
+    HousingInteriorPlacedItems3 = 25005,
+    HousingInteriorPlacedItems4 = 25006,
+    HousingInteriorPlacedItems5 = 25007,
+    HousingInteriorPlacedItems6 = 25008,
+    HousingInteriorPlacedItems7 = 25009,
+    HousingInteriorPlacedItems8 = 25010,
+
+    // 50 max per container, 400 slots max
+    // slot limit increased 'temporarily' for relocation for all estates
+    // see: https://na.finalfantasyxiv.com/lodestone/topics/detail/d781e0d538428aef93b8bed4b50dd62c3c50fc74
+    HousingInteriorStoreroom1 = 27001,
+    HousingInteriorStoreroom2 = 27002,
+    HousingInteriorStoreroom3 = 27003,
+    HousingInteriorStoreroom4 = 27004,
+    HousingInteriorStoreroom5 = 27005,
+    HousingInteriorStoreroom6 = 27006,
+    HousingInteriorStoreroom7 = 27007,
+    HousingInteriorStoreroom8 = 27008,
+
+
+    // housing exterior containers
+    HousingExteriorAppearance = 25000,
+    HousingExteriorPlacedItems = 25001,
+    HousingExteriorStoreroom = 27000,
+
+
+  };
+
+  struct HuntingLogEntry
+  {
+    uint8_t rank;
+    uint8_t entries[10][4];
+  };
+
+  enum class UnlockEntry : uint16_t
+  {
+    Return = 1,
+    Teleport = 4,
+    GearSets = 6,
+    HuntingLog = 21,
   };
 
   enum ContainerType : uint16_t
@@ -328,8 +401,7 @@ namespace Core::Common
     uint32_t sourceActorId;
   };
 
-  enum CharaLook :
-    uint8_t
+  enum CharaLook : uint8_t
   {
     Race = 0x00,
     Gender = 0x01,
@@ -360,22 +432,26 @@ namespace Core::Common
 
   };
 
-  enum MoveType :
-    uint8_t
+  enum MoveType : uint8_t
   {
     Running = 0x00,
     Walking = 0x02,
     Strafing = 0x04,
     Jumping = 0x10,
-    BackWalk = 0x06,
   };
 
-  enum MoveState :
-    uint8_t
+  enum MoveState : uint8_t
   {
     No = 0x00,
-    Land = 0x02,
-    Fall = 0x04,
+    LeaveCollision = 0x01,
+    EnterCollision = 0x02,
+    StartFalling = 0x04,
+  };
+
+  enum MoveSpeed : uint8_t
+  {
+    Walk = 24,
+    Run = 60,
   };
 
   struct QuestActive
@@ -392,6 +468,7 @@ namespace Core::Common
       c.UI8E = 0;
       c.UI8F = 0;
       c.padding = 0;
+      c.padding1 = 0;
     }
 
 
@@ -471,8 +548,7 @@ namespace Core::Common
 
   };
 
-  enum struct ActionAspect :
-    uint8_t
+  enum struct ActionAspect : uint8_t
   {
     None = 0,   // Doesn't imply unaspected
     Fire = 1,
@@ -484,8 +560,22 @@ namespace Core::Common
     Unaspected = 7    // Doesn't imply magical unaspected damage - could be unaspected physical
   };
 
-  enum class ActionType :
-    int8_t
+  enum class ActionPrimaryCostType : uint8_t
+  {
+    None = 0, // ?
+    MagicPoints = 3,
+    TacticsPoints = 5,
+//    WARGauge = 22,
+//    DRKGauge = 25,
+//    AetherflowStack = 30,
+//    Status = 32,
+//    PLDGauge = 41,
+//    RDMGaugeBoth = 74,
+////  RDMGaugeBlack = 75, // not right?
+//    DRGGauge3Eyes = 76,
+  };
+
+  enum class ActionType : int8_t
   {
     WeaponOverride = -1, // Needs more investigation (takes the damage type of the equipped weapon)?
     Unknown_0 = 0,
@@ -499,8 +589,7 @@ namespace Core::Common
     LimitBreak = 8,
   };
 
-  enum ActionEffectType :
-    uint8_t
+  enum ActionEffectType : uint8_t
   {
     Nothing = 0,
     Miss = 1,
@@ -517,12 +606,19 @@ namespace Core::Common
     TpLoss = 12,
     TpGain = 13,
     GpGain = 14,
+    /*!
+     * @brief Tells the client that it should show combo indicators on actions.
+     *
+     * @param flags Required to be 128, doesn't show combo rings on hotbars otherwise
+     * @param value The actionid that starts/continues the combo. eg, 3617 will start a spinning slash and/or syphon strike combo
+     */
+    StartActionCombo = 28,
     Knockback = 33,
-    Mount = 38
+    Mount = 38,
+    VFX = 59, // links to VFX sheet
   };
 
-  enum class ActionHitSeverityType :
-    uint8_t
+  enum class ActionHitSeverityType : uint8_t
   {
     NormalDamage = 0,
     CritHeal = 0,
@@ -532,16 +628,36 @@ namespace Core::Common
     CritDirectHitDamage = 3
   };
 
-  enum ActionEffectDisplayType :
-    uint8_t
+  enum ItemActionType : uint16_t
+  {
+    ItemActionVFX = 852,
+    ItemActionVFX2 = 944,
+  };
+
+  enum ActionEffectDisplayType : uint8_t
   {
     HideActionName = 0,
     ShowActionName = 1,
     ShowItemName = 2,
   };
 
-  enum class ActionCollisionType :
-    uint8_t
+  struct EffectEntry
+  {
+    Common::ActionEffectType effectType;
+    Common::ActionHitSeverityType hitSeverity;
+    uint8_t param;
+    /*!
+     * @brief Shows an additional percentage in the battle log
+     *
+     * Has no effect on what is shown and stored in value
+     */
+    int8_t bonusPercent;
+    uint8_t valueMultiplier;      // This multiplies whatever value is in the 'value' param by 10. Possibly a workaround for big numbers
+    uint8_t flags;
+    int16_t value;
+  };
+
+  enum class ActionCollisionType : uint8_t
   {
     None,
     SingleTarget,
@@ -554,32 +670,36 @@ namespace Core::Common
     Unknown3
   };
 
-  enum HandleActionType :
-    uint8_t
+  enum class ActionInterruptType : uint8_t
+  {
+    None,
+    RegularInterrupt,
+    DamageInterrupt,
+  };
+
+  enum HandleActionType : uint8_t
   {
     Event,
     Spell,
     Teleport
   };
 
-  enum HandleSkillType :
-    uint8_t
+  enum HandleSkillType : uint8_t
   {
     StdDamage,
     StdHeal,
     StdDot,
   };
 
-  enum InvincibilityType :
-    uint8_t
+  enum InvincibilityType : uint8_t
   {
     InvincibilityNone,
     InvincibilityRefill,
     InvincibilityStayAlive,
+    InvincibilityIgnoreDamage,
   };
 
-  enum PlayerStateFlag :
-    uint8_t
+  enum PlayerStateFlag : uint8_t
   {
     HideUILockChar = 0, // as the name suggests, hides the ui and logs the char...
     InCombat = 1, // in Combat, locks gearchange/return/teleport
@@ -595,8 +715,7 @@ namespace Core::Common
 
   };
 
-  enum struct FateStatus :
-    uint8_t
+  enum struct FateStatus : uint8_t
   {
     Active = 2,
     Inactive = 4,
@@ -604,8 +723,7 @@ namespace Core::Common
     Completed = 8,
   };
 
-  enum struct ChatType :
-    uint16_t
+  enum struct ChatType : uint16_t
   {
     LogKindError,
     ServerDebug,
@@ -710,8 +828,7 @@ namespace Core::Common
     Unused100
   };
 
-  enum EquipDisplayFlags :
-    uint8_t
+  enum EquipDisplayFlags : uint8_t
   {
     HideNothing = 0x0,
     HideHead = 0x1,
@@ -724,11 +841,149 @@ namespace Core::Common
     Visor = 0x40,
   };
 
-  enum SkillType :
-    uint8_t
+  enum SkillType : uint8_t
   {
     Normal = 0x1,
+    ItemAction = 0x2,
     MountSkill = 0xD,
+  };
+
+  enum HouseExteriorSlot
+  {
+    HousePermit,
+    ExteriorRoof,
+    ExteriorWall,
+    ExteriorWindow,
+    ExteriorDoor,
+    ExteriorRoofDecoration,
+    ExteriorWallDecoration,
+    ExteriorPlacard,
+    ExteriorFence
+  };
+
+  enum HouseInteriorSlot
+  {
+    InteriorWall,
+    InteriorFloor,
+    InteriorLight,
+    InteriorWall_Attic,
+    InteriorFloor_Attic,
+    InteriorLight_Attic,
+    InteriorWall_Basement,
+    InteriorFloor_Basement,
+    InteriorLight_Basement,
+    InteriorLight_Mansion
+  };
+
+  enum HouseTagSlot
+  {
+    MainTag,
+    SubTag1,
+    SubTag2
+  };
+
+  enum LandFlagsSlot
+  {
+    FreeCompany,
+    Private,
+    Apartment,
+    SharedHouse1,
+    SharedHouse2
+  };
+
+  enum class LandType : uint8_t
+  {
+    none = 0,
+    FreeCompany = 1,
+    Private = 2,
+  };
+
+  enum LandFlags : uint32_t
+  {
+    EstateBuilt = 0x1,
+    HasAetheryte = 0x2,
+    UNKNOWN_1 = 0x4,
+    UNKNOWN_2 = 0x8,
+    UNKNOWN_3 = 0x10,
+  };
+
+  struct LandIdent
+  {
+    int16_t landId; //00
+    int16_t wardNum; //02
+    int16_t territoryTypeId; //04
+    int16_t worldId; //06
+  };
+
+  struct LandFlagSet
+  {
+    LandIdent landIdent;
+    uint32_t landFlags; //08
+    uint32_t unkown1; //12
+  };
+
+  struct HousingObject
+  {
+    uint32_t itemId;
+    uint32_t padding; // was itemrotation + unknown/pad, looks unused now
+    float rotation;
+    Common::FFXIVARR_POSITION3 pos;
+  };
+
+  enum HouseSize : uint8_t
+  {
+    Cottage,
+    House,
+    Mansion
+  };
+
+  enum HouseStatus : uint8_t
+  {
+    none,
+    ForSale,
+    Sold,
+    PrivateEstate,
+    FreeCompanyEstate,
+  };
+
+  enum HouseIconAdd : uint8_t
+  {
+    heart = 0x06
+  };
+
+  enum WardlandFlags : uint8_t
+  {
+    IsEstateOwned = 1,
+    IsPublicEstate = 2,
+    HasEstateGreeting = 4,
+    EstateFlagUnknown = 8,
+    IsFreeCompanyEstate = 16,
+  };
+
+  struct PlayerTeleportQuery
+  {
+    uint16_t targetAetheryte;
+    uint16_t cost;
+  };
+
+  enum LevelTableEntry : uint8_t
+  {
+    PIE,
+    MP,
+    MAIN,
+    SUB,
+    DIV,
+    HP,
+    ELMT,
+    THREAT
+  };
+
+  enum CastType : uint8_t
+  {
+    SingleTarget = 1,
+    CircularAOE = 2,
+    RectangularAOE = 4,
+    CircularAoEPlaced = 7
   };
 
   using PlayerStateFlagList = std::vector< PlayerStateFlag >;

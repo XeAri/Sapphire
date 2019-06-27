@@ -5,12 +5,11 @@
 #include "Operation.h"
 #include <memory>
 
-namespace Core::Db
+namespace Sapphire::Db
 {
   class PreparedStatement;
 
-  class StatementTask :
-    public Operation
+  class StatementTask : public Operation
   {
   public:
 
@@ -20,15 +19,9 @@ namespace Core::Db
 
     bool execute() override;
 
-    //   QueryResultFuture getFuture() const
-    //   {
-    //      return m_result->get_future();
-    //   }
-
   private:
     std::string m_sql;
     bool m_hasResult;
-  //      QueryResultPromise *m_result;
   };
 
   class PreparedStatementTask :
@@ -40,12 +33,10 @@ namespace Core::Db
     ~PreparedStatementTask();
 
     bool execute() override;
-    //PreparedQueryResultFuture getFuture() { return m_result->get_future(); }
 
   protected:
     std::shared_ptr< PreparedStatement > m_stmt;
     bool m_hasResult;
-    //PreparedQueryResultPromise* m_result;
   };
 
 }

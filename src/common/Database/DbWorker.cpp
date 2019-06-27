@@ -2,7 +2,10 @@
 #include "Operation.h"
 #include "Util/LockedWaitQueue.h"
 
-Core::Db::DbWorker::DbWorker( Core::LockedWaitQueue< std::shared_ptr< Operation > >* newQueue, DbConnection* pConn )
+using namespace Sapphire::Common;
+
+Sapphire::Db::DbWorker::DbWorker( Util::LockedWaitQueue< std::shared_ptr< Operation > >* newQueue,
+                                  DbConnection* pConn )
 {
   m_pConn = pConn;
   m_queue = newQueue;
@@ -10,14 +13,14 @@ Core::Db::DbWorker::DbWorker( Core::LockedWaitQueue< std::shared_ptr< Operation 
   m_workerThread = std::thread( &DbWorker::workerThread, this );
 }
 
-Core::Db::DbWorker::~DbWorker()
+Sapphire::Db::DbWorker::~DbWorker()
 {
   m_cancelationToken = true;
   m_queue->cancel();
   m_workerThread.join();
 }
 
-void Core::Db::DbWorker::workerThread()
+void Sapphire::Db::DbWorker::workerThread()
 {
   if( !m_queue )
     return;

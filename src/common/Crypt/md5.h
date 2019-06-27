@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-namespace Core::Util
+namespace Sapphire::Common::Util
 {
   using md5_context = struct
   {
@@ -29,8 +29,7 @@ namespace Core::Util
     "message digest",
     "abcdefghijklmnopqrstuvwxyz",
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-    "12345678901234567890123456789012345678901234567890123456789012" \
-         "345678901234567890"
+    "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
   };
 
   static const char* val[] =

@@ -5,12 +5,13 @@
 
 #define PI 3.14159265358979323846f
 
-namespace Core::Math::Util
+namespace Sapphire::Common::Util
 {
 
   float distanceSq( float x, float y, float z, float x1, float y1, float z1 );
 
   float distance( float x, float y, float z, float x1, float y1, float z1 );
+  float distance( const Common::FFXIVARR_POSITION3& pos1, const Common::FFXIVARR_POSITION3& pos2 );
 
   float distance2DSq( float x, float y, float x1, float y1 );
 

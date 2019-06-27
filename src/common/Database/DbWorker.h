@@ -6,7 +6,7 @@
 #include "Util/LockedWaitQueue.h"
 #include <memory>
 
-namespace Core::Db
+namespace Sapphire::Db
 {
   class DbConnection;
   class Operation;
@@ -14,12 +14,12 @@ namespace Core::Db
   class DbWorker
   {
   public:
-    DbWorker( LockedWaitQueue< std::shared_ptr< Operation > >* newQueue, DbConnection* connection );
+    DbWorker( Common::Util::LockedWaitQueue< std::shared_ptr< Operation > >* newQueue, DbConnection* connection );
 
     ~DbWorker();
 
   private:
-    LockedWaitQueue< std::shared_ptr< Operation > >* m_queue;
+    Common::Util::LockedWaitQueue< std::shared_ptr< Operation > >* m_queue;
     DbConnection* m_pConn;
 
     void workerThread();

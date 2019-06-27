@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace Core
+namespace Sapphire::Common::Util
 {
 
   template< class T >

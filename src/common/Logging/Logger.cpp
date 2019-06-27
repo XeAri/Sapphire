@@ -1,40 +1,34 @@
 #include "Logger.h"
 
+#define SPDLOG_LEVEL_NAMES { "trace", "debug", "info", "warn", "error", "fatal", "off" }
+
 #include <spdlog/spdlog.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/daily_file_sink.h>
 
 // #include <iostream>
+#include <experimental/filesystem> // or #include <filesystem>
 
-namespace Core
+namespace fs = std::experimental::filesystem;
+
+void Sapphire::Logger::init( const std::string& logPath )
 {
+  auto pos = logPath.find_last_of( fs::path::preferred_separator );
 
+  if( pos != std::string::npos )
+  {
+    std::string realPath = logPath.substr( 0, pos );
+    fs::create_directories( realPath );
+  }
 
-Logger::Logger()
-{
-
-}
-
-Logger::~Logger()
-{
-
-}
-
-void Logger::setLogPath( const std::string& logPath )
-{
-  m_logFile = logPath;
-}
-
-void Logger::init()
-{
   spdlog::init_thread_pool( 8192, 1 );
 
   auto stdout_sink = std::make_shared< spdlog::sinks::stdout_color_sink_mt >();
-  auto daily_sink = std::make_shared< spdlog::sinks::daily_file_sink_mt >( m_logFile + ".log", 0, 0 );
+  auto daily_sink = std::make_shared< spdlog::sinks::daily_file_sink_mt >( logPath + ".log", 0, 0 );
 
-  std::vector<spdlog::sink_ptr> sinks { stdout_sink, daily_sink };
-  
+  std::vector< spdlog::sink_ptr > sinks { stdout_sink, daily_sink };
+
   auto logger = std::make_shared< spdlog::async_logger >( "logger", sinks.begin(), sinks.end(),
                                                           spdlog::thread_pool(), spdlog::async_overflow_policy::block );
 
@@ -48,25 +42,38 @@ void Logger::init()
   spdlog::flush_on( spdlog::level::critical );
 }
 
-void Logger::error( const std::string& text )
+void Sapphire::Logger::setLogLevel( uint8_t logLevel )
+{
+  spdlog::set_level( static_cast< spdlog::level::level_enum >( logLevel ) );
+}
+
+void Sapphire::Logger::error( const std::string& text )
 {
   spdlog::get( "logger" )->error( text );
 }
 
-void Logger::info( const std::string& text )
+void Sapphire::Logger::warn( const std::string& text )
+{
+  spdlog::get( "logger" )->warn( text );
+}
+
+void Sapphire::Logger::info( const std::string& text )
 {
   spdlog::get( "logger" )->info( text );
 }
 
-void Logger::debug( const std::string& text )
+void Sapphire::Logger::debug( const std::string& text )
 {
   spdlog::get( "logger" )->debug( text );
 }
 
-void Logger::fatal( const std::string& text )
+void Sapphire::Logger::fatal( const std::string& text )
 {
   spdlog::get( "logger" )->critical( text );
 }
 
-
+void Sapphire::Logger::trace( const std::string& text )
+{
+  spdlog::get( "logger" )->trace( text );
 }
+

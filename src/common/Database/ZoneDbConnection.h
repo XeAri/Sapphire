@@ -3,7 +3,7 @@
 
 #include "DbConnection.h"
 
-namespace Core::Db
+namespace Sapphire::Db
 {
   class DbConnectionInfo;
 
@@ -72,11 +72,35 @@ namespace Core::Db
 
     CHARA_ITEMINV_INS,
 
+    CHARA_ITEMGLOBAL_SELECT,
     CHARA_ITEMGLOBAL_INS,
     CHARA_ITEMGLOBAL_UP,
     CHARA_ITEMGLOBAL_DELETE,
 
+    CHARA_MONSTERNOTE_INS,
+    CHARA_MONSTERNOTE_UP,
+    CHARA_MONSTERNOTE_SEL,
+
     ZONE_SEL_BNPCTEMPLATES,
+    ZONE_SEL_SPAWNGROUPS,
+    ZONE_SEL_SPAWNPOINTS,
+
+    LAND_INS,
+    LAND_SEL,
+    LAND_SEL_ALL,
+    LAND_UP,
+    LANDSET_SEL,
+    HOUSING_HOUSE_INS,
+    HOUSING_HOUSE_UP,
+    HOUSING_HOUSE_DEL,
+
+    LAND_INV_SEL_ALL,
+    LAND_INV_SEL_HOUSE,
+    LAND_INV_DEL,
+    LAND_INV_UP,
+    LAND_INV_UP_ITEMPOS,
+    LAND_INV_DEL_ITEMPOS,
+
 
     MAX_STATEMENTS
   };
@@ -88,7 +112,7 @@ namespace Core::Db
 
     ZoneDbConnection( ConnectionInfo& connInfo );
 
-    ZoneDbConnection( Core::LockedWaitQueue< std::shared_ptr< Operation > >* q, ConnectionInfo& connInfo );
+    ZoneDbConnection( Common::Util::LockedWaitQueue< std::shared_ptr< Operation > >* q, ConnectionInfo& connInfo );
 
     ~ZoneDbConnection();
 
